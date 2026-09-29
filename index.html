@@ -1,0 +1,2810 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>채용공고 관리</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'Segoe UI',sans-serif;background:#f5f5f5;color:#222;font-size:14px}
+.wrap{max-width:1400px;margin:0 auto;padding:16px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+header h1{font-size:18px;color:#4F4F4F}
+.row{display:flex;gap:16px}
+.col-edit{flex:1;min-width:0}
+.col-preview{flex:1;min-width:0}
+@media(max-width:900px){.row{flex-direction:column}}
+
+/* Tabs */
+.tabs{display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;background:#e5e5e5;border:none;color:#555;transition:transform 0.15s}
+.tab:hover{background:#d5d5d5}
+.tab.on{background:#4DD2A7;color:#fff}
+.tab[draggable]{cursor:grab}
+.tab.dragging{opacity:0.4;transform:scale(0.95)}
+.tab.drag-over-left{box-shadow:-3px 0 0 0 #4DD2A7}
+.tab.drag-over-right{box-shadow:3px 0 0 0 #4DD2A7}
+
+/* Card */
+.card{background:#fff;border:1px solid #ddd;border-radius:8px;margin-bottom:12px}
+.card-h{padding:10px 14px;border-bottom:1px solid #eee;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:space-between}
+.card-b{padding:14px}
+
+/* Form */
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;font-weight:700;color:#666;margin-bottom:4px}
+.field textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font:13px/1.7 inherit;resize:vertical;min-height:80px;outline:none}
+.field textarea:focus{border-color:#4DD2A7}
+.field input{width:100%;padding:6px 8px;border:1px solid #ddd;border-radius:6px;font:13px inherit;outline:none}
+
+/* Buttons */
+.btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid #ddd;background:#fff;color:#333}
+.btn:hover{background:#f0f0f0}
+.btn-b{background:#4DD2A7;color:#fff;border-color:#4DD2A7}
+.btn-b:hover{background:#3cb592}
+.btn-g{background:#fff;color:#4F4F4F;border-color:#ccc}
+.btn-g:hover{background:#f5f5f5}
+.btn-r{background:#FF8770;color:#fff;border-color:#FF8770}
+.btn-r:hover{background:#e6725c}
+.btn-sm{padding:3px 8px;font-size:11px}
+
+/* Preview */
+.pv-box{background:#fafafa;border:1px solid #eee;border-radius:6px;padding:12px;font-size:13px;line-height:1.8;white-space:pre-wrap;word-break:break-word;max-height:400px;overflow-y:auto;position:relative}
+.pv-html{white-space:normal}
+.pv-html ul{padding-left:20px;margin:4px 0}
+.pv-html li{margin:2px 0}
+.pv-html h3{font-size:14px;font-weight:700;margin:14px 0 6px}
+.pv-html h3:first-child{margin-top:0}
+.pv-html p{margin:4px 0}
+
+/* Copy section */
+.cp-sec{border:1px solid #eee;border-radius:6px;margin-bottom:8px;overflow:hidden}
+.cp-h{display:flex;align-items:center;justify-content:space-between;padding:6px 12px;background:#f8f8f8;border-bottom:1px solid #eee}
+.cp-h span{font-size:12px;font-weight:600}
+.cp-field-hint{font-weight:400!important;color:#999!important;font-size:11px!important;margin-left:6px;flex:1}
+.cp-body{padding:8px 12px;font-size:12px;line-height:1.7;max-height:160px;overflow-y:auto;white-space:pre-wrap;color:#666}
+
+/* Toast */
+.toast{position:fixed;bottom:16px;right:16px;background:#4F4F4F;color:#fff;padding:8px 16px;border-radius:6px;font-size:13px;z-index:99;display:none}
+
+/* Tag */
+.tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;font-weight:700}
+.tag-b{background:#e0f7ef;color:#2a9d75}
+.tag-g{background:#e0f7ef;color:#3cb592}
+.tag-y{background:#fff3e0;color:#92400e}
+
+/* Modal */
+.modal-bg{position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.4);z-index:50;display:flex;align-items:center;justify-content:center}
+.modal{background:#fff;border-radius:12px;width:95%;max-width:720px;max-height:85vh;overflow-y:auto;padding:20px;box-shadow:0 8px 30px rgba(0,0,0,.2)}
+.modal h2{font-size:16px;margin-bottom:14px}
+.modal h3{font-size:13px;margin:16px 0 8px;color:#666}
+
+/* Section list in modal */
+.sec-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #eee;border-radius:6px;margin-bottom:4px;background:#fff}
+.sec-row:hover{background:#f8f8f8}
+.sec-row .sec-name{flex:1;font-size:13px;font-weight:600}
+.sec-row .sec-key{font-size:10px;color:#999;margin-left:4px}
+.sec-row select{font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:4px}
+.arrow-btn{width:24px;height:24px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center}
+.arrow-btn:hover{background:#f0f0f0}
+
+/* Platform field config */
+.pf-row{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid #eee;border-radius:6px;margin-bottom:4px;background:#fff}
+.pf-row:hover{background:#f8f8f8}
+.pf-label{font-size:12px;font-weight:600;min-width:100px}
+.pf-sections{flex:1;display:flex;gap:3px;flex-wrap:wrap}
+.pf-tag{font-size:10px;padding:2px 6px;border-radius:4px;background:#e5e5e5;cursor:pointer;user-select:none}
+.pf-tag.active{background:#e0f7ef;color:#2a9d75}
+
+/* Line break control */
+.lb-ctrl{display:flex;align-items:center;gap:0;background:#f8f8f8;border:1px solid #eee;border-radius:8px;padding:4px 10px;width:fit-content}
+.lb-item{display:flex;align-items:center;gap:4px}
+.lb-label{font-size:11px;color:#666;font-weight:600;white-space:nowrap}
+.lb-btn{width:22px;height:22px;border:1px solid #ddd;border-radius:4px;background:#fff;cursor:pointer;font-size:13px;font-weight:700;color:#555;display:flex;align-items:center;justify-content:center;line-height:1}
+.lb-btn:hover{background:#e5e5e5}
+.lb-val{font-size:13px;font-weight:700;color:#4DD2A7;min-width:16px;text-align:center}
+.lb-unit{font-size:10px;color:#999}
+.lb-sep{width:1px;height:16px;background:#ddd;margin:0 10px}
+
+/* Platform desc */
+.plt-desc{font-size:11px;color:#888;background:#f8f8f8;border:1px solid #eee;border-radius:6px;padding:8px 12px;margin-bottom:10px;line-height:1.5}
+
+/* Platform tab groups */
+.plt-groups{display:flex;flex-direction:column;gap:6px}
+.plt-row{display:flex;align-items:center;gap:4px}
+.plt-label{font-size:10px;font-weight:700;color:#fff;background:#999;border-radius:4px;padding:2px 7px;white-space:nowrap;min-width:56px;text-align:center}
+.plt-label.t-separate{background:#4DD2A7}
+.plt-label.t-single{background:#6DD0F8}
+.plt-label.t-html{background:#FF8770}
+/* t-fullhtml은 html 그룹으로 통합 */
+.plt-row .tab{padding:4px 10px;font-size:11px}
+
+/* Position bar */
+.pos-bar{display:flex;align-items:flex-start;gap:6px;margin-bottom:12px}
+.pos-tabs-wrap{display:flex;flex:1;min-width:0;align-items:flex-start;gap:4px}
+.pos-tabs-fixed{display:flex;gap:4px;align-items:center;flex-shrink:0}
+.pos-tabs-scroll{display:flex;gap:4px;flex-wrap:wrap;flex:1;min-width:0;align-items:center}
+.pos-actions{display:flex;gap:4px;flex-shrink:0;align-items:flex-start}
+.tab-common{background:#e0f7ef!important;color:#2a9d75!important}
+.tab-common.on{background:#4DD2A7!important;color:#fff!important}
+.tab-sep{width:1px;height:22px;background:#ccc;flex-shrink:0;align-self:center}
+
+/* Control bar (lb + batch copy) */
+.ctrl-row{display:flex;align-items:center;gap:0;margin:8px 0 4px;justify-content:space-between}
+.batch-btns{display:flex;gap:4px;align-items:center}
+
+/* Job title slot (편집기 헤더) */
+.jt-slot{width:100%;font-size:13px;font-weight:600;color:#4F4F4F;border:1px solid #ddd;border-radius:6px;padding:6px 8px;background:#fff;outline:none}
+.jt-slot:focus{border-color:#4DD2A7;background:#f0faf6}
+
+/* Job title in preview */
+.jt-sec .cp-h{background:#f8f8f8}
+
+/* Language toggle */
+.lang-toggle{display:flex;gap:2px;align-items:center}
+.lang-btn{padding:2px 8px;border-radius:4px;font-size:10px;font-weight:700;border:1px solid #ddd;background:#fff;cursor:pointer;color:#666}
+.lang-btn:hover{background:#f0f0f0}
+.lang-btn.on{background:#4DD2A7;color:#fff;border-color:#4DD2A7}
+.lang-tag{font-size:9px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:3px;vertical-align:middle}
+.lang-tag-ko{background:#fef3c7;color:#92400e}
+.lang-tag-en{background:#dff4fb;color:#3aafda}
+
+/* Position status */
+.status-tag{font-size:8px;font-weight:700;padding:1px 4px;border-radius:3px;margin-left:2px;vertical-align:middle}
+.status-draft{background:#f3f4f6;color:#6b7280}
+.status-active{background:#e0f7ef;color:#3cb592}
+.status-closed{background:#ffe8e3;color:#e6725c}
+.status-select{font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:4px;margin-left:6px}
+
+/* Posted platform checkbox row */
+.posted-row{display:flex;align-items:center;gap:6px;margin-bottom:3px}
+.posted-row label{font-size:11px;color:#666;cursor:pointer;display:flex;align-items:center;gap:4px}
+.posted-row input[type=checkbox]{margin:0;cursor:pointer}
+.posted-check{accent-color:#4DD2A7}
+
+/* Archive button */
+.btn-archive{background:#6DD0F8;color:#fff;border-color:#6DD0F8}
+.btn-archive:hover{background:#55b8e0}
+
+/* Drag handle */
+.drag-handle{cursor:grab;color:#aaa;font-size:16px;line-height:1;padding:0 4px;user-select:none;flex-shrink:0}
+.drag-handle:hover{color:#666}
+.drag-handle:active{cursor:grabbing}
+/* Drag states for cards & rows */
+.plt-card{transition:box-shadow 0.15s,opacity 0.15s}
+.plt-card.dragging{opacity:0.4;box-shadow:0 0 0 2px #4DD2A7}
+.plt-card.drag-over{box-shadow:0 -3px 0 0 #4DD2A7}
+.pf-row.dragging{opacity:0.4}
+.pf-row.drag-over{box-shadow:0 -3px 0 0 #4DD2A7}
+.sec-row.dragging{opacity:0.4}
+.sec-row.drag-over{box-shadow:0 -3px 0 0 #4DD2A7}
+
+/* Supabase sync */
+.sync-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.sync-dot.off{background:#ccc}
+.sync-dot.ok{background:#4DD2A7}
+.sync-dot.err{background:#dc2626}
+.sync-dot.syncing{background:#f59e0b;animation:pulse .8s infinite alternate}
+@keyframes pulse{from{opacity:1}to{opacity:.4}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>채용공고 관리 도구</h1>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+      <button class="btn btn-sm" onclick="undo()" title="실행 취소 (Ctrl+Z)">↩ 취소</button>
+      <button class="btn btn-sm" onclick="redo()" title="다시 실행 (Ctrl+Y)">↪ 재실행</button>
+      <span style="width:1px;height:18px;background:#ddd;margin:0 2px"></span>
+      <button class="btn btn-sm btn-g" onclick="exportData()">💾 저장</button>
+      <span id="localBtns"><button class="btn btn-sm" onclick="document.getElementById('importFile').click()">📂 불러오기</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)"></span>
+      <button class="btn btn-sm" onclick="openArchive()">📦 보관함</button>
+      <span style="width:1px;height:18px;background:#ddd;margin:0 2px"></span>
+      <button class="btn btn-sm" onclick="openSectionMgr()">⚙️ 섹션 관리</button>
+      <button class="btn btn-sm" onclick="openPlatformMgr()">📋 플랫폼 설정</button>
+      <span style="width:1px;height:18px;background:#ddd;margin:0 2px"></span>
+      <button class="btn btn-sm" id="syncBtn" onclick="openSupabaseMgr()" title="클라우드 동기화 설정"><span class="sync-dot off" id="syncDot"></span>Cloud</button>
+    </div>
+  </header>
+
+  <!-- Position Tabs (공통 + 포지션 한 줄) -->
+  <div class="pos-bar">
+    <div class="pos-tabs-wrap" id="posTabs"></div>
+    <div class="pos-actions">
+      <button class="btn btn-b btn-sm" onclick="addPosition()">+ 추가</button>
+      <button class="btn btn-sm" onclick="duplicatePosition()">복사</button>
+      <button class="btn btn-sm btn-archive" onclick="archivePosition()">보관</button>
+      <button class="btn btn-r btn-sm" onclick="removePosition()">삭제</button>
+    </div>
+  </div>
+  <div class="row">
+    <!-- Editor -->
+    <div class="col-edit">
+      <div class="card">
+        <div class="card-h"><span>📝 편집기</span></div>
+        <div class="card-b" id="editor"></div>
+      </div>
+    </div>
+
+    <!-- Preview -->
+    <div class="col-preview">
+      <div class="card">
+        <div class="card-h">
+          <span>👁️ 플랫폼 미리보기 / 복사</span>
+        </div>
+        <div class="card-b">
+          <div class="tabs" id="pltTabs"></div>
+          <div class="ctrl-row">
+            <div class="lb-ctrl">
+              <div class="lb-item">
+                <span class="lb-label">섹션 간</span>
+                <button class="lb-btn" onclick="adjLB('between',-1)">−</button>
+                <span class="lb-val" id="lbBetween">2</span>
+                <button class="lb-btn" onclick="adjLB('between',1)">+</button>
+                <span class="lb-unit">줄</span>
+              </div>
+              <div class="lb-sep"></div>
+              <div class="lb-item">
+                <span class="lb-label">합쳐진 섹션 내</span>
+                <button class="lb-btn" onclick="adjLB('within',-1)">−</button>
+                <span class="lb-val" id="lbWithin">1</span>
+                <button class="lb-btn" onclick="adjLB('within',1)">+</button>
+                <span class="lb-unit">줄</span>
+              </div>
+            </div>
+            <div class="batch-btns">
+              <button class="btn btn-sm btn-b" id="batchBtn" onclick="batchStep()" title="클릭할 때마다 한 칸씩 순서대로 복사">일괄복사</button>
+              <button class="btn btn-sm" onclick="batchReverse()" title="순서 반전">⇅</button>
+              <button class="btn btn-sm" onclick="batchReset()" title="처음부터 다시">↺</button>
+            </div>
+          </div>
+          <div id="preview" style="margin-top:12px"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div id="modalRoot"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ── Default Config ──
+const DEFAULT_SECTIONS = [
+  {key:'company_intro', name:'회사 소개', commonOnly:true},
+  {key:'responsibilities', name:'주요업무', commonOnly:false},
+  {key:'qualifications', name:'자격요건', commonOnly:false},
+  {key:'preferred', name:'우대사항', commonOnly:false},
+  {key:'process', name:'채용 과정', commonOnly:true},
+  {key:'notice', name:'확인해주세요', commonOnly:true},
+  {key:'benefits', name:'복지 혜택', commonOnly:true},
+];
+
+const DEFAULT_PLATFORMS = [
+  // ── 개별 필드 입력 (separate) ──
+  {id:'wanted', name:'원티드', type:'separate', b:'- ',
+   desc:'IT/스타트업 특화. textarea 6필드(회사소개·주요업무·자격요건·우대사항·혜택및복지·채용과정). 플레인텍스트 입력.',
+   fields:[
+     {l:'회사소개', s:['company_intro']},
+     {l:'주요업무', s:['responsibilities']},
+     {l:'자격요건', s:['qualifications']},
+     {l:'우대사항', s:['preferred']},
+     {l:'혜택 및 복지', s:['benefits','process','notice']},
+   ]},
+  {id:'remember', name:'리멤버', type:'separate', b:'- ',
+   desc:'경력직 특화. textarea 6필드(공고소개·주요업무·자격요건·우대사항·채용절차·기타안내). 플레인텍스트 입력.',
+   fields:[
+     {l:'공고 소개', s:['company_intro']},
+     {l:'주요 업무', s:['responsibilities']},
+     {l:'자격 요건', s:['qualifications']},
+     {l:'우대사항', s:['preferred','benefits']},
+     {l:'채용 절차', s:['process']},
+     {l:'기타 안내', s:['notice']},
+   ]},
+  {id:'programmers', name:'프로그래머스', type:'separate', b:'- ',
+   desc:'개발자 채용 특화. 포지션 설명 중심의 구조화된 필드.',
+   fields:[
+     {l:'회사/팀 소개', s:['company_intro']},
+     {l:'주요업무', s:['responsibilities']},
+     {l:'자격요건', s:['qualifications']},
+     {l:'우대사항', s:['preferred']},
+     {l:'혜택 및 복지', s:['benefits']},
+     {l:'채용절차/안내', s:['process','notice']},
+   ]},
+  // ── 통합 텍스트 (single) ──
+  {id:'linkedin', name:'링크드인', type:'single', b:'• ',
+   desc:'글로벌 비즈니스 네트워크. 단일 Job Description 필드에 전체 내용 입력. 불릿: • '},
+  {id:'jobplanet', name:'잡플래닛', type:'single', b:'• ',
+   desc:'기업리뷰 기반 채용 플랫폼. 상세 내용 단일 텍스트 입력. 불릿: • '},
+  {id:'catch', name:'캐치', type:'single', b:'• ',
+   desc:'대학생·신입·인턴 특화(진학사 운영). 상세 내용 단일 텍스트 입력. 불릿: • '},
+  {id:'rocketpunch', name:'로켓펀치', type:'single', b:'- ',
+   desc:'스타트업 특화. 상세 내용 단일 텍스트 필드 + 연봉/스톡옵션 별도. 불릿: - '},
+  // ── HTML 입력 (리치 텍스트 에디터) ──
+  {id:'greeting', name:'그리팅', type:'fullhtml', b:'· ',
+   desc:'ATS(채용관리솔루션). Quill 1.3.6 리치텍스트 에디터. 붙여넣기용 복사→Ctrl+V로 서식 유지 입력. 불릿: · '},
+  {id:'jobkorea', name:'잡코리아', type:'html', b:'· ',
+   desc:'종합 구인구직 1세대. iframe WYSIWYG 에디터(글꼴/크기/볼드/색상/정렬/이미지). 직접입력 또는 템플릿 모드. 불릿: · '},
+  {id:'saramin', name:'사람인', type:'html', b:'· ',
+   desc:'MAU 1위 종합 플랫폼. 1단계 textarea 기본입력 → 2단계 공고꾸미기(HTML 에디터). 불릿: · '},
+  {id:'incruit', name:'인크루트', type:'html', b:'· ',
+   desc:'1세대 종합 구인구직. HTML 에디터 지원. 불릿: · '},
+  {id:'indeed', name:'인디드', type:'html', b:'• ',
+   desc:'글로벌 1위 구인구직. HTML 리치텍스트 에디터. 700~2,000자 권장. 구조화된 세그먼트(회사소개·업무·자격요건) 지원. 인디드 유료 게시 시 글래스도어 자동 연동. 불릿: • '},
+  {id:'glassdoor', name:'글래스도어', type:'html', b:'• ',
+   desc:'기업리뷰 기반 글로벌 채용 플랫폼. 인디드와 통합 운영(인디드 유료 게시→글래스도어 자동 노출). 리치텍스트 에디터, 150자 이상·2,000~10,000자 권장. 불릿: • '},
+];
+
+// 고정 localStorage 키 (파일명 변경해도 데이터 유지)
+const LS_KEY = 'jpm_recruit';
+const LS_KEY_LB = LS_KEY + '_lb';
+
+// ── Storage ──
+let _fileHandle = null;
+let _dirty = false; // 파일 저장 이후 변경 여부 추적
+let _savedOnce = false; // 이 세션에서 파일 저장/불러오기 한 적 있는지
+
+// ── Undo/Redo ──
+const UNDO_MAX = 20;
+let _undoStack = [];
+let _redoStack = [];
+let _skipSnapshot = false; // undo/redo 복원 시 재귀 방지
+
+function _pushUndo(){
+  if(_skipSnapshot) return;
+  _undoStack.push(JSON.stringify(D));
+  if(_undoStack.length > UNDO_MAX) _undoStack.shift();
+  _redoStack = []; // 새 변경이 생기면 redo 스택 초기화
+}
+
+function undo(){
+  if(!_undoStack.length){ toast('되돌릴 내용이 없습니다'); return; }
+  _redoStack.push(JSON.stringify(D));
+  const snap = _undoStack.pop();
+  _skipSnapshot = true;
+  D = JSON.parse(snap);
+  localStorage.setItem(LS_KEY, snap);
+  _dirty = true;
+  if(_fileHandle) { _writeToHandle(); _dirty = false; }
+  _skipSnapshot = false;
+  // curPos 유효성 검사
+  if(curPos !== '__common__' && !D.positions.includes(curPos)) curPos = D.positions[0] || '';
+  render();
+  toast('실행 취소');
+}
+
+function redo(){
+  if(!_redoStack.length){ toast('다시 실행할 내용이 없습니다'); return; }
+  _undoStack.push(JSON.stringify(D));
+  const snap = _redoStack.pop();
+  _skipSnapshot = true;
+  D = JSON.parse(snap);
+  localStorage.setItem(LS_KEY, snap);
+  _dirty = true;
+  if(_fileHandle) { _writeToHandle(); _dirty = false; }
+  _skipSnapshot = false;
+  if(curPos !== '__common__' && !D.positions.includes(curPos)) curPos = D.positions[0] || '';
+  render();
+  toast('다시 실행');
+}
+
+// ── Storage: localStorage(동기 폴백) + localForage(IndexedDB 주 저장소) ──
+function load(){ try{return JSON.parse(localStorage.getItem(LS_KEY))}catch{return null} }
+function save(){
+  _pushUndo();
+  const json = JSON.stringify(D);
+  // 동기: localStorage (즉시 반영, 크기 제한 ~5MB)
+  try{ localStorage.setItem(LS_KEY, json); }catch(e){
+    // localStorage 용량 초과 시 IndexedDB에만 저장
+    console.warn('localStorage 용량 초과, IndexedDB에만 저장:', e.message);
+  }
+  // 비동기: IndexedDB (localForage, ~수백MB)
+  if(typeof localforage !== 'undefined'){
+    localforage.setItem(LS_KEY, json).catch(e=>console.warn('IndexedDB 저장 실패:', e));
+  }
+  _dirty = true;
+  if(_fileHandle) { _writeToHandle(); _dirty = false; }
+}
+
+// 비동기 초기화: IndexedDB에 더 최신 데이터가 있으면 반영
+function _initFromIndexedDB(){
+  if(typeof localforage === 'undefined') return;
+  localforage.config({ name:'job_posting_mgr', storeName:'data' });
+  localforage.getItem(LS_KEY).then(val=>{
+    if(!val) {
+      // IndexedDB에 없으면 현재 데이터를 IndexedDB에 백업
+      localforage.setItem(LS_KEY, JSON.stringify(D));
+      return;
+    }
+    try{
+      const idbData = JSON.parse(val);
+      // IndexedDB 데이터가 더 많은 포지션을 가지고 있으면 (= 더 최신일 가능성) 사용
+      if(idbData && idbData.positions && idbData.positions.length > (D.positions||[]).length){
+        D = idbData;
+        curPos = D.positions[0] || '';
+        render();
+      }
+    }catch(e){}
+  }).catch(()=>{});
+}
+async function _writeToHandle(){
+  try{
+    const w = await _fileHandle.createWritable();
+    await w.write(JSON.stringify(D, null, 2));
+    await w.close();
+  }catch(e){ _fileHandle = null; }
+}
+
+// ── Seed Data (최초 실행 시 1회만 사용, 이후 localStorage가 우선) ──
+const SEED_DATA = {"positions": ["예시 직무"], "data": {"공통": {"company_intro": "회사 소개를 여기에 작성합니다. 모든 직무 공고에 공통으로 들어갑니다.", "process": "서류 전형 > 1차 인터뷰 > 2차 인터뷰 > 처우 협의 > 최종 합격", "notice": "· 공통 안내 사항을 여기에 작성합니다.", "benefits": "· 복지 항목을 여기에 작성합니다."}, "예시 직무": {"responsibilities": "· 이 직무가 합류해서 할 일을 적습니다.", "qualifications": "· 꼭 필요한 경험과 역량을 적습니다.", "preferred": "· 있으면 좋은 경험을 적습니다."}}, "sections": [{"key": "company_intro", "name": "회사 소개", "commonOnly": true}, {"key": "responsibilities", "name": "주요업무", "commonOnly": false}, {"key": "qualifications", "name": "자격요건", "commonOnly": false}, {"key": "preferred", "name": "우대사항", "commonOnly": false}, {"key": "process", "name": "채용 과정", "commonOnly": true}, {"key": "notice", "name": "확인해주세요", "commonOnly": true}, {"key": "benefits", "name": "복지 혜택", "commonOnly": true}]};
+
+// ── State ──
+const SEED_VER = 3;
+let D = load();
+if(!D || D._v !== SEED_VER) {
+  // 클라우드 설정이 있으면 빈 구조로 시작 (pull이 채워줌) — SEED 덮어쓰기 방지
+  const _hasSbConf = !!localStorage.getItem(LS_KEY + '_sb');
+  if(_hasSbConf){
+    D = { positions: [], data: {}, archived: [], _v: SEED_VER };
+  } else {
+    D = JSON.parse(JSON.stringify(SEED_DATA));
+    D._v = SEED_VER;
+  }
+  save();
+}
+
+// 하위호환: sections가 없으면 기본값 적용
+if(!D.sections) D.sections = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+if(!D.platforms) D.platforms = JSON.parse(JSON.stringify(DEFAULT_PLATFORMS));
+// 하위호환: metadata 객체 초기화 (positions.metadata JSONB 컬럼 매핑)
+if(!D.metadata) D.metadata = {};
+// 하위호환: 구 "잡코리아/사람인" 통합 id → 분리
+if(D.platforms.find(p=>p.id==='jobkorea' && p.name==='잡코리아/사람인')){
+  D.platforms = JSON.parse(JSON.stringify(DEFAULT_PLATFORMS));
+  save();
+}
+// 하위호환: 리멤버 필드 구조 업데이트 (v3: 6필드 구조, 실제 에디터 반영)
+const _rem = D.platforms.find(p=>p.id==='remember');
+if(_rem && _rem.fields && _rem.fields.length!==6){
+  _rem.fields = JSON.parse(JSON.stringify(DEFAULT_PLATFORMS.find(p=>p.id==='remember').fields));
+  _rem.desc = DEFAULT_PLATFORMS.find(p=>p.id==='remember').desc;
+  save();
+}
+// 하위호환: 원티드 desc 업데이트
+const _wan = D.platforms.find(p=>p.id==='wanted');
+if(_wan && _wan.desc && !_wan.desc.includes('textarea')){
+  _wan.desc = DEFAULT_PLATFORMS.find(p=>p.id==='wanted').desc;
+  save();
+}
+// 하위호환: 그리팅 single→fullhtml 마이그레이션 (Quill 리치텍스트 에디터 지원)
+const _grt = D.platforms.find(p=>p.id==='greeting');
+if(_grt && _grt.type==='single'){
+  _grt.type = 'fullhtml';
+  _grt.desc = DEFAULT_PLATFORMS.find(p=>p.id==='greeting').desc;
+  save();
+}
+// 하위호환: greeting id 중복 제거 (resetPlatforms 버그로 2개 생긴 경우)
+{
+  const grtAll = D.platforms.reduce((acc, p, i) => { if(p.id==='greeting') acc.push(i); return acc; }, []);
+  if(grtAll.length > 1){
+    // 첫 번째(fullhtml)만 남기고 나머지 삭제 (뒤에서부터 splice)
+    for(let i = grtAll.length-1; i >= 1; i--) D.platforms.splice(grtAll[i], 1);
+    save();
+  }
+}
+
+let curPos = D.positions[0] || '';
+let curPlt = 'wanted';
+let commonLang = 'ko'; // 공통 탭 내부 KO/EN 전환 상태
+// 하위호환: posLang 없으면 초기화
+if(!D.posLang) D.posLang = {};
+
+// 줄바꿈 설정 (localStorage 별도 저장)
+let LB = JSON.parse(localStorage.getItem(LS_KEY_LB) || '{}');
+if(!LB.between) LB.between = 2;
+if(!LB.within) LB.within = 1;
+
+function adjLB(key, delta){
+  LB[key] = Math.max(0, Math.min(5, LB[key] + delta));
+  localStorage.setItem(LS_KEY_LB, JSON.stringify(LB));
+  $('lb' + key.charAt(0).toUpperCase() + key.slice(1)).textContent = LB[key];
+  renderPreview();
+}
+function nlRepeat(n){ return '\n'.repeat(n + 1); }  // n줄 = n+1개 \n
+function brRepeat(n){ return '<br>'.repeat(n); }
+
+// 💾 저장 버튼: File System Access API 사용 가능하면 파일 핸들 획득 후 자동저장 연결
+async function exportData(){
+  const json = JSON.stringify(D, null, 2);
+  const fname = document.title.replace(/[^a-zA-Z0-9가-힣_ -]/g,'') + '_data.json';
+
+  // File System Access API 지원 시 → 파일 핸들 획득 (이후 자동저장)
+  if(window.showSaveFilePicker){
+    try{
+      _fileHandle = await showSaveFilePicker({
+        suggestedName: fname,
+        types:[{description:'JSON',accept:{'application/json':['.json']}}]
+      });
+      await _writeToHandle();
+      _savedOnce = true; _dirty = false;
+      toast('저장 완료 (자동저장 연결됨)');
+      return;
+    }catch(e){ if(e.name==='AbortError') return; }
+  }
+  // 폴백: 다운로드
+  const blob = new Blob([json],{type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = fname;
+  a.click();
+  URL.revokeObjectURL(a.href);
+  _savedOnce = true; _dirty = false;
+  toast('데이터 파일 다운로드됨');
+}
+
+// 📂 불러오기 버튼
+function importData(input){
+  const file = input.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e){
+    try{
+      const imported = JSON.parse(e.target.result);
+      if(!imported.data){
+        toast('올바른 데이터 파일이 아닙니다 (data 키 없음)'); return;
+      }
+      if(!imported.positions) imported.positions = [];
+      // 전체 덮어쓰기
+      D.positions = imported.positions;
+      D.data = imported.data;
+      D.archived = imported.archived || [];
+      D.posStatus = imported.posStatus || {};
+      D.posLang = imported.posLang || {};
+      D.jobTitles = imported.jobTitles || {};
+      D.postedPlatforms = imported.postedPlatforms || {};
+      D.metadata = imported.metadata || {};
+      if(imported.sections) D.sections = imported.sections;
+      if(imported.platforms) D.platforms = imported.platforms;
+      if(!D.sections) D.sections = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+      if(!D.platforms) D.platforms = JSON.parse(JSON.stringify(DEFAULT_PLATFORMS));
+      D._v = SEED_VER;
+      save();
+      curPos = D.positions[0] || '__common__';
+      render();
+      toast('불러오기 완료 (' + D.positions.length + '개 포지션)');
+      // 클라우드 연결 시 즉시 push
+      if(_sb){
+        clearTimeout(_sbPushTimer);
+        _sbPush().then(()=> toast('클라우드에도 반영 완료'));
+      }
+    }catch(err){ toast('파일 읽기 실패: ' + err.message); }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+// ── Helpers ──
+function $(id){return document.getElementById(id)}
+function esc(s){return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+// onclick 속성 내 JS 단따옴표 문자열 이스케이프: \, ', ", 개행 처리
+function escJs(s){ return (s||'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/"/g,'&quot;').replace(/\n/g,'\\n').replace(/\r/g,''); }
+// 미니 마크다운: **볼드**, [텍스트](url) → HTML 변환 (esc 후 적용)
+// 링크는 http(s) 스킴만 허용 — javascript: 등은 클릭 시 실행되는 XSS 벡터이므로 원문 그대로 출력
+function miniMd(s){
+  let h = esc(s);
+  h = h.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  h = h.replace(/\[([^\]]+)\]\(([^)]+)\)/g, (m, text, url) =>
+    /^https?:\/\//i.test(url.trim()) ? `<a href="${url}" target="_blank" style="color:#4DD2A7">${text}</a>` : m);
+  return h;
+}
+function toast(m){ const t=$('toast'); t.textContent=m; t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',2000) }
+
+function clip(text){
+  navigator.clipboard.writeText(text).catch(()=>{
+    const t=document.createElement('textarea');t.value=text;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);
+  });
+}
+// 리치 HTML 복사 (ATS 에디터 붙여넣기 호환)
+function clipHtml(html){
+  // text/plain에는 태그 제거한 텍스트를 넣어야 일반 에디터에서도 깔끔
+  const plainText = html.replace(/<br\s*\/?>/gi,'\n').replace(/<\/li>/gi,'\n').replace(/<\/p>/gi,'\n').replace(/<\/h[1-6]>/gi,'\n').replace(/<[^>]+>/g,'').replace(/\n{3,}/g,'\n\n').trim();
+  // ClipboardItem API 사용 시도 (HTTPS/localhost에서만 동작)
+  if(navigator.clipboard && typeof ClipboardItem !== 'undefined'){
+    try {
+      const blob = new Blob([html], {type:'text/html'});
+      const textBlob = new Blob([plainText], {type:'text/plain'});
+      navigator.clipboard.write([new ClipboardItem({'text/html': blob, 'text/plain': textBlob})])
+        .then(()=>{})
+        .catch(()=>{ _clipHtmlFallback(html); });
+    } catch(e){ _clipHtmlFallback(html); }
+  } else {
+    _clipHtmlFallback(html);
+  }
+}
+function _clipHtmlFallback(html){
+  const div = document.createElement('div');
+  div.innerHTML = html;
+  div.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+  document.body.appendChild(div);
+  const range = document.createRange();
+  range.selectNodeContents(div);
+  const sel = window.getSelection();
+  sel.removeAllRanges(); sel.addRange(range);
+  try { document.execCommand('copy'); } catch(e){}
+  sel.removeAllRanges();
+  document.body.removeChild(div);
+}
+
+function bullets(text, b){
+  if(!text) return '';
+  return text.split('\n').map(l=>{
+    const t=l.trim();
+    if(/^[•·\-▸]\s/.test(t)) return b + t.replace(/^[•·\-▸]\s*/,'');
+    return l;
+  }).join('\n');
+}
+
+// clean=true → Quill 호환 순수 시맨틱 HTML, clean=false → 인라인 스타일 포함(미리보기/자체페이지용)
+function toHtml(text, title, clean){
+  if(!text) return '';
+  let h = '';
+  if(title) h = clean ? '<h3>'+esc(title)+'</h3>\n' : '<h3 style="font-size:16px;font-weight:bold;margin:18px 0 8px">'+esc(title)+'</h3>\n';
+  let inUl = false;
+  text.split('\n').forEach(l=>{
+    const t=l.trim();
+    if(!t){if(inUl){h+='</ul>\n';inUl=false;} return;}
+    if(/^[•·\-▸]\s/.test(t)){
+      if(!inUl){h+= clean ? '<ul>\n' : '<ul style="padding-left:22px">\n'; inUl=true;}
+      h+= clean ? '<li>'+miniMd(t.replace(/^[•·\-▸]\s*/,''))+'</li>\n' : '<li style="margin:3px 0">'+miniMd(t.replace(/^[•·\-▸]\s*/,''))+'</li>\n';
+    } else {
+      if(inUl){h+='</ul>\n';inUl=false;}
+      h+= clean ? '<p>'+miniMd(t)+'</p>\n' : '<p style="margin:5px 0">'+miniMd(t)+'</p>\n';
+    }
+  });
+  if(inUl) h+='</ul>\n';
+  return h;
+}
+
+function getCommonKey(pos){
+  // 포지션 언어에 따라 공통 데이터 소스 결정
+  if(!D.posLang) D.posLang = {};
+  const lang = D.posLang[pos] || 'ko';
+  return lang === 'en' ? '공통_en' : '공통';
+}
+
+// 포지션 언어에 따른 포지션별 데이터 키 (KO: posName, EN: posName__en)
+function getPosDataKey(posName){
+  if(!D.posLang) D.posLang = {};
+  const lang = D.posLang[posName] || 'ko';
+  return lang === 'en' ? posName + '__en' : posName;
+}
+
+function getVal(secKey, pos){
+  const usePos = pos || curPos;
+  const sec = D.sections.find(s=>s.key===secKey);
+  // 공통 편집 모드일 때는 현재 선택된 공통 언어 데이터 반환
+  if(usePos === '__common__'){
+    const cdk = commonLang === 'en' ? '공통_en' : '공통';
+    return (D.data[cdk]||{})[secKey] || '';
+  }
+  // 포지션 언어에 맞는 공통 데이터 선택
+  const ck = getCommonKey(usePos);
+  const c = (D.data[ck]||{})[secKey] || '';
+  if(!sec) return c;
+  if(!usePos || sec.commonOnly) return c;
+  // 포지션 언어에 맞는 포지션별 데이터 선택
+  const pdk = getPosDataKey(usePos);
+  const p = (D.data[pdk]||{})[secKey] || '';
+  if(p && c) return c+'\n\n'+p;
+  return p || c;
+}
+
+function secName(k){ return D.sections.find(s=>s.key===k)?.name || k }
+
+function genKey(name){
+  // 한글 이름에서 key 생성
+  const base = name.replace(/\s+/g,'_').replace(/[^a-zA-Z0-9가-힣_]/g,'');
+  let key = base || 'sec';
+  let i = 1;
+  while(D.sections.find(s=>s.key===key)){ key = base + '_' + (i++); }
+  return key;
+}
+
+// ── 포지션 탭 드래그 앤 드롭 ──
+let _dragIdx = -1;
+function initTabDrag(){
+  const wrap = $('posTabsInner') || $('posTabs');
+  const tabs = wrap.querySelectorAll('.tab[draggable]');
+  tabs.forEach(tab=>{
+    tab.addEventListener('dragstart', e=>{
+      _dragIdx = +tab.dataset.idx;
+      tab.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    tab.addEventListener('dragend', ()=>{
+      tab.classList.remove('dragging');
+      wrap.querySelectorAll('.tab').forEach(t=>t.classList.remove('drag-over-left','drag-over-right'));
+    });
+    tab.addEventListener('dragover', e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const targetIdx = +tab.dataset.idx;
+      if(targetIdx === _dragIdx) return;
+      wrap.querySelectorAll('.tab').forEach(t=>t.classList.remove('drag-over-left','drag-over-right'));
+      tab.classList.add(targetIdx < _dragIdx ? 'drag-over-left' : 'drag-over-right');
+    });
+    tab.addEventListener('dragleave', ()=>{
+      tab.classList.remove('drag-over-left','drag-over-right');
+    });
+    tab.addEventListener('drop', e=>{
+      e.preventDefault();
+      const targetIdx = +tab.dataset.idx;
+      if(targetIdx === _dragIdx || _dragIdx < 0) return;
+      const item = D.positions.splice(_dragIdx, 1)[0];
+      D.positions.splice(targetIdx, 0, item);
+      save();
+      render();
+    });
+  });
+}
+
+// ── Render ──
+function render(){
+  if(!D.jobTitles) D.jobTitles = {};
+  if(!D.posLang) D.posLang = {};
+
+  const isCommon = curPos==='__common__';
+
+  // 공통 탭(고정) + 포지션 탭(wrap 영역 분리)
+  let fixedH = `<button class="tab tab-common ${isCommon?'on':''}" onclick="curPos='__common__';render()">공통</button>`;
+  if(D.positions.length) fixedH += `<span class="tab-sep"></span>`;
+
+  if(!D.posStatus) D.posStatus = {};
+  let posH = D.positions.map((p)=>{
+    const lang = D.posLang[p] || 'ko';
+    const langTag = `<span class="lang-tag lang-tag-${lang}">${lang.toUpperCase()}</span>`;
+    const st = D.posStatus[p] || 'draft';
+    const stTag = st !== 'draft' ? `<span class="status-tag status-${st}">${st==='active'?'Active':'Closed'}</span>` : '';
+    const origIdx = D.positions.indexOf(p);
+    return `<button class="tab ${p===curPos?'on':''}" draggable="true" data-idx="${origIdx}" onclick="curPos='${escJs(p)}';render()">${esc(D.jobTitles[p] || p)}${langTag}${stTag}</button>`;
+  }).join('');
+
+  $('posTabs').innerHTML = `<div class="pos-tabs-fixed">${fixedH}</div><div class="pos-tabs-scroll" id="posTabsInner">${posH}</div>`;
+  initTabDrag();
+
+  renderPlatformArea();
+  renderEditor();
+}
+
+function renderPlatformTabs(){
+  // fullhtml은 html 그룹에 통합 표시
+  const typeOrder = ['separate','single','html'];
+  const typeLabels = {separate:'개별', single:'통합', html:'HTML'};
+  let pltH = '<div class="plt-groups">';
+  typeOrder.forEach(type=>{
+    const group = D.platforms.filter(p=> !p.hidden && (type==='html' ? (p.type==='html'||p.type==='fullhtml') : p.type===type));
+    if(!group.length) return;
+    pltH += `<div class="plt-row"><span class="plt-label t-${type}">${typeLabels[type]}</span>`;
+    group.forEach(p=>{
+      pltH += `<button class="tab ${p.id===curPlt?'on':''}" title="${esc(p.desc||'')}" onclick="curPlt='${p.id}';renderPlatformArea()">${esc(p.name)}</button>`;
+    });
+    pltH += '</div>';
+  });
+  pltH += '</div>';
+  $('pltTabs').innerHTML = pltH;
+}
+
+function renderPlatformArea(){
+  // 현재 선택된 플랫폼이 숨김이면 첫 번째 보이는 플랫폼으로 전환
+  const curPltObj = D.platforms.find(p=>p.id===curPlt);
+  if(!curPltObj || curPltObj.hidden){
+    const first = D.platforms.find(p=>!p.hidden);
+    if(first) curPlt = first.id;
+  }
+  renderPlatformTabs();
+  renderPreview();
+  BC.cells=[]; BC.labels=[]; BC.idx=0; updateBatchBtn();
+}
+
+function renderEditor(){
+  if(!curPos && !D.positions.length){
+    $('editor').innerHTML = '<p style="color:#999;text-align:center;padding:20px">상단에서 포지션을 추가하세요</p>';
+    return;
+  }
+
+  const isCommonMode = curPos === '__common__';
+  const commonDataKey = commonLang === 'en' ? '공통_en' : '공통';
+  const commonLangLabel = commonLang.toUpperCase();
+  let h = '';
+
+  if(isCommonMode){
+    // 공통 탭: KO/EN 토글 버튼
+    h += `<div class="field"><label style="display:flex;align-items:center;gap:6px">공통 데이터 <span class="lang-toggle"><button class="lang-btn ${commonLang==='ko'?'on':''}" onclick="setCommonLang('ko')">KO</button><button class="lang-btn ${commonLang==='en'?'on':''}" onclick="setCommonLang('en')">EN</button></span></label></div>`;
+    if(!D.data[commonDataKey]) D.data[commonDataKey] = {};
+    D.sections.filter(sec=>sec.commonOnly).forEach(sec=>{
+      const cv = (D.data[commonDataKey]||{})[sec.key] || '';
+      h += `<div class="field"><label>${esc(sec.name)} <span class="tag tag-b">공통 ${commonLangLabel}</span></label>`;
+      h += `<textarea data-t="c" data-k="${sec.key}" rows="${Math.max(3,cv.split('\n').length)}">${esc(cv)}</textarea>`;
+      h += '</div>';
+    });
+  } else {
+    // 공고명 슬랏 (첫 섹션 위) + 언어 토글 버튼
+    if(!D.jobTitles) D.jobTitles = {};
+    if(!D.posLang) D.posLang = {};
+    const jtVal = D.jobTitles[curPos] || curPos;
+    const posLang = D.posLang[curPos] || 'ko';
+    if(!D.posStatus) D.posStatus = {};
+    const curSt = D.posStatus[curPos] || 'draft';
+    h += `<div class="field"><label style="display:flex;align-items:center;gap:6px">공고명 <span class="lang-toggle"><button class="lang-btn ${posLang==='ko'?'on':''}" onclick="setPosLang('ko')">KO</button><button class="lang-btn ${posLang==='en'?'on':''}" onclick="setPosLang('en')">EN</button></span><select class="status-select" onchange="setPosStatus(this.value)"><option value="draft"${curSt==='draft'?' selected':''}>Draft</option><option value="active"${curSt==='active'?' selected':''}>Active</option><option value="closed"${curSt==='closed'?' selected':''}>Closed</option></select></label>`;
+    h += `<input class="jt-slot" value="${esc(jtVal)}" placeholder="공고명 입력..." oninput="saveJT(this.value)" onchange="saveJT(this.value)">`;
+    // 내부 ID 표시 + 변경 버튼 (표시명과 키 분리 명시)
+    h += `<div style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:11px;color:#888">`;
+    h += `<span>ID:</span>`;
+    h += `<code style="background:#f4f4f5;padding:2px 6px;border-radius:4px;font-family:monospace;color:#555;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${esc(curPos)}">${esc(curPos)}</code>`;
+    h += `<button class="btn btn-sm" onclick="openRenameModal()" style="font-size:10px;padding:2px 8px" title="Supabase 키와 모든 자식 데이터를 함께 변경">🔑 ID 변경</button>`;
+    h += `</div>`;
+    h += `</div>`;
+
+    // 게시 현황 (공고명 바로 아래, 한줄)
+    if(!D.postedPlatforms) D.postedPlatforms = {};
+    if(!D.postedPlatforms[curPos]) D.postedPlatforms[curPos] = {};
+    const posted = D.postedPlatforms[curPos];
+    const visiblePlts = D.platforms.filter(p=>!p.hidden);
+    h += `<div class="field" style="margin-bottom:10px"><label style="margin-bottom:2px">📎 게시 현황</label>`;
+    h += `<div style="display:flex;flex-wrap:wrap;gap:4px 12px">`;
+    visiblePlts.forEach(plt=>{
+      const ck2 = posted[plt.id] ? 'checked' : '';
+      h += `<label style="font-size:11px;color:#666;cursor:pointer;display:inline-flex;align-items:center;gap:3px;white-space:nowrap"><input type="checkbox" class="posted-check" ${ck2} onchange="togglePosted('${plt.id}',this.checked)" style="margin:0;cursor:pointer">${esc(plt.name)}</label>`;
+    });
+    h += `</div></div>`;
+
+    // 메타필드 카드 (자동화 옵션) — positions.metadata JSONB 동기화
+    h += renderMetadataCard();
+
+    const ck = getCommonKey(curPos);
+    const pdk = getPosDataKey(curPos);
+    const clLabel = (D.posLang[curPos]||'ko').toUpperCase();
+    D.sections.forEach(sec=>{
+      const cv = (D.data[ck]||{})[sec.key] || '';
+      const pv = sec.commonOnly ? null : ((D.data[pdk]||{})[sec.key] || '');
+
+      h += `<div class="field"><label>${esc(sec.name)} ${sec.commonOnly?'<span class="tag tag-b">공통 '+clLabel+'</span>':'<span class="tag tag-g">포지션별</span>'}</label>`;
+
+      if(sec.commonOnly){
+        if(cv){
+          h += `<div style="font-size:12px;color:#888;background:#f9f9f9;border:1px solid #eee;border-radius:6px;padding:8px;max-height:100px;overflow-y:auto;white-space:pre-wrap;line-height:1.6">${esc(cv.length>200?cv.slice(0,200)+'...':cv)}</div>`;
+        } else {
+          h += `<span style="font-size:11px;color:#ccc">—</span>`;
+        }
+      } else {
+        if(cv) {
+          h += `<details style="margin-bottom:4px"><summary style="font-size:11px;color:#999;cursor:pointer">공통 ${clLabel} 내용 보기</summary>`;
+          h += `<div style="font-size:12px;color:#888;background:#f9f9f9;border:1px solid #eee;border-radius:6px;padding:8px;margin-top:4px;white-space:pre-wrap;line-height:1.6;max-height:120px;overflow-y:auto">${esc(cv)}</div></details>`;
+        }
+        h += `<textarea data-t="p" data-k="${sec.key}" rows="${Math.max(3,(pv||'').split('\n').length)}" placeholder="포지션별 내용 입력...">${esc(pv||'')}</textarea>`;
+      }
+      h += '</div>';
+    });
+
+  }
+
+  $('editor').innerHTML = h;
+
+  // Bind input events
+  $('editor').querySelectorAll('textarea').forEach(ta=>{
+    ta.addEventListener('input', function(){
+      const type = this.dataset.t;
+      const key = this.dataset.k;
+      if(type==='c'){
+        if(!D.data[commonDataKey]) D.data[commonDataKey]={};
+        D.data[commonDataKey][key] = this.value;
+      } else {
+        const _pdk = getPosDataKey(curPos);
+        if(!D.data[_pdk]) D.data[_pdk]={};
+        D.data[_pdk][key] = this.value;
+      }
+      save();
+      renderPreview();
+    });
+  });
+}
+
+function renderPreview(){
+  const plt = D.platforms.find(p=>p.id===curPlt);
+  if(!plt){ $('preview').innerHTML=''; return; }
+  if(curPos==='__common__'){
+    $('preview').innerHTML='<p style="color:#999;font-size:13px">포지션을 선택하면 플랫폼별 미리보기가 표시됩니다.</p>';
+    return;
+  }
+
+  // 플랫폼 설명 + 동일형식 안내
+  let descH = '';
+  const sameType = D.platforms.filter(p=>p.type===plt.type && p.id!==plt.id);
+  const descText = (plt.desc||'') + (sameType.length ? ' [같은 형식: '+sameType.map(p=>p.name).join(', ')+']' : '');
+  if(descText.trim()) descH += `<div class="plt-desc">${esc(descText)}</div>`;
+
+  if(plt.type==='separate') renderSeparate(plt);
+  else if(plt.type==='html') renderHtmlPreview(plt);
+  else if(plt.type==='fullhtml') renderFullHtml(plt);
+  else renderSingle(plt);
+
+  // 공고명 + 플랫폼 설명을 preview 앞에 삽입
+  $('preview').innerHTML = descH + jtSecHtml() + $('preview').innerHTML;
+}
+
+function renderSeparate(plt){
+  // separate 타입에 fields가 없으면 기본 생성
+  const fields = plt.fields || D.sections.map(s=>({l:s.name, s:[s.key]}));
+  let h = '';
+  fields.forEach(f=>{
+    const parts = f.s.map(sk=>{
+      const v = getVal(sk);
+      if(!v) return '';
+      if(f.s.length > 1) return '['+secName(sk)+']\n'+bullets(v, plt.b);
+      return bullets(v, plt.b);
+    }).filter(Boolean);
+    const text = parts.join(nlRepeat(LB.within));
+    const id = 'cp_'+plt.id+'_'+f.l.replace(/[^a-zA-Z0-9가-힣]/g,'');
+
+    const secNames = f.s.map(sk=>secName(sk)).join(' + ');
+    h += `<div class="cp-sec"><div class="cp-h"><span>${esc(f.l)}</span><span class="cp-field-hint">${esc(secNames)}</span>`;
+    h += `<button class="btn btn-sm btn-b" onclick="copySepField('${plt.id}','${f.s.join(',')}');toast('복사됨')">복사</button></div>`;
+    h += `<div class="cp-body" id="${id}">${esc(text)||'(내용 없음)'}</div></div>`;
+  });
+  $('preview').innerHTML = h;
+}
+
+function renderSingle(plt){
+  const full = D.sections.map(s=>{
+    const v=getVal(s.key); if(!v) return '';
+    return '['+s.name+']\n'+bullets(v, plt.b);
+  }).filter(Boolean).join(nlRepeat(LB.between));
+
+  let h = '<div style="margin-bottom:8px;display:flex;gap:4px;flex-wrap:wrap">';
+  h += `<button class="btn btn-sm btn-b" onclick="copyFull('${plt.id}')">전체 복사</button>`;
+  D.sections.forEach(s=>{ if(getVal(s.key)) h+=`<button class="btn btn-sm" onclick="copySec('${s.key}','${plt.id}')">${esc(s.name)}</button>`; });
+  h += '</div>';
+  h += `<div class="pv-box">${esc(full)}</div>`;
+  $('preview').innerHTML = h;
+}
+
+function renderHtmlPreview(plt){
+  const htmlStr = D.sections.map(s=>{
+    const v=getVal(s.key); if(!v) return '';
+    return toHtml(v, s.name);
+  }).filter(Boolean).join(brRepeat(LB.between));
+
+  let h = '<div style="margin-bottom:8px;display:flex;gap:4px;flex-wrap:wrap">';
+  h += `<button class="btn btn-sm btn-b" onclick="copyRichHtml()">📋 붙여넣기용 복사</button>`;
+  h += `<button class="btn btn-sm btn-g" onclick="copyHtmlAll()">HTML 소스 복사</button>`;
+  h += `<button class="btn btn-sm" onclick="copyFull('${plt.id}')">텍스트 복사</button>`;
+  h += '</div>';
+  h += `<div class="pv-box pv-html">${htmlStr}</div>`;
+  $('preview').innerHTML = h;
+}
+
+// fullhtml은 html과 동일 렌더링 (자체페이지 제거 후 그리팅 전용)
+function renderFullHtml(plt){
+  renderHtmlPreview(plt);
+}
+
+// ── Copy Functions ──
+function copyFull(pltId){
+  const plt = D.platforms.find(p=>p.id===pltId);
+  const t = D.sections.map(s=>{
+    const v=getVal(s.key); if(!v) return '';
+    return '['+s.name+']\n'+bullets(v, plt.b);
+  }).filter(Boolean).join(nlRepeat(LB.between));
+  clip(t); toast('전체 텍스트 복사됨');
+}
+
+function copySec(secKey, pltId){
+  const plt = D.platforms.find(p=>p.id===pltId);
+  clip(bullets(getVal(secKey), plt.b));
+  toast(secName(secKey)+' 복사됨');
+}
+
+// separate 타입 필드 단위 복사 (여러 섹션이 하나의 필드에 합쳐진 경우)
+function copySepField(pltId, secKeysStr){
+  const plt = D.platforms.find(p=>p.id===pltId);
+  if(!plt) return;
+  const keys = secKeysStr.split(',');
+  const parts = keys.map(sk=>{
+    const v = getVal(sk);
+    if(!v) return '';
+    if(keys.length > 1) return '['+secName(sk)+']\n'+bullets(v, plt.b);
+    return bullets(v, plt.b);
+  }).filter(Boolean);
+  const text = parts.join(nlRepeat(LB.within));
+  clip(text);
+}
+
+function copyHtmlAll(){
+  const h = D.sections.map(s=>{
+    const v=getVal(s.key); if(!v) return '';
+    return toHtml(v, s.name);
+  }).filter(Boolean).join('\n'+brRepeat(LB.between)+'\n');
+  clip(h); toast('HTML 복사됨');
+}
+
+// 리치 HTML 복사 — ATS(그리팅 Quill 등) 에디터 붙여넣기용
+// Quill 1.3.6 호환: 태그 사이 \n(공백 텍스트 노드)를 모두 제거해야 빈 단락 삽입 방지
+// Quill은 블록 요소 사이의 \n을 별도 단락으로 파싱함
+function copyRichHtml(){
+  let h = '<h2>'+ esc(curPos) +'</h2>';
+  const parts=[]; D.sections.forEach(s=>{ const v=getVal(s.key); if(v) parts.push(toHtml(v, s.name, true)); });
+  h += parts.join('');
+  // 태그 사이 공백/줄바꿈 제거 → Quill이 빈 단락을 추가로 생성하지 않음
+  h = h.replace(/>\s+</g, '><');
+  clipHtml(h);
+  toast('붙여넣기용 복사 완료 — Ctrl+V');
+}
+
+// copyFullPage, openPreview 제거됨 (자체페이지 기능 폐기, fullhtml→html 통합)
+
+// buildBridgePayload/sendToBridge(📤 매크로로 전송) 제거됨 —
+// 클립보드 payload 채널은 userscript v0.1.0~0.3.0 시절 설계. 현행 확장·userscript는
+// 모두 Supabase에서 직접 fetch하므로 읽는 쪽이 없는 죽은 기능이었음 (v0.8.0에서 정리).
+
+function copyJT(){
+  clip(getJT());
+  toast('공고명 복사됨');
+}
+
+function getJT(){
+  if(!D.jobTitles) D.jobTitles = {};
+  return D.jobTitles[curPos] || curPos;
+}
+
+function jtSecHtml(){
+  if(!curPos || curPos==='__common__') return '';
+  if(!D.jobTitles) D.jobTitles = {};
+  const val = D.jobTitles[curPos] || curPos;
+  return `<div class="cp-sec jt-sec"><div class="cp-h"><span>공고명</span><span id="jtDisplay" style="flex:1;margin:0 8px;font-size:12px;font-weight:600;color:#333">${esc(val)}</span><button class="btn btn-sm btn-b" onclick="copyJT()">복사</button></div></div>`;
+}
+
+function setPosLang(lang){
+  if(!D.posLang) D.posLang = {};
+  D.posLang[curPos] = lang;
+  // 언어 전환 시 해당 언어 데이터 키가 없으면 빈 객체 생성
+  const pdk = getPosDataKey(curPos);
+  if(!D.data[pdk]) D.data[pdk] = {};
+  save();
+  render();
+}
+
+function setPosStatus(val){
+  if(!D.posStatus) D.posStatus = {};
+  D.posStatus[curPos] = val;
+  save();
+  // 탭 상태 태그 즉시 반영
+  render();
+}
+
+function togglePosted(pltId, checked){
+  if(!D.postedPlatforms) D.postedPlatforms = {};
+  if(!D.postedPlatforms[curPos]) D.postedPlatforms[curPos] = {};
+  D.postedPlatforms[curPos][pltId] = checked;
+  save();
+}
+
+// ══════════════════════════════════════
+// ── Metadata Card (positions.metadata JSONB) ──
+// 7개 메타 키: job_categories(태그 array, max 3), employment_type(radio),
+//   career_type(radio), career_min/max(int), salary_min/max(int nullable),
+//   deadline_type(radio) + deadline_date(ISO date nullable), location(text),
+//   extras(checkbox: 병역특례·외국어우대·외국인지원·장애인우대)
+// Supabase positions.metadata JSONB 컬럼과 1:1 매핑
+// ══════════════════════════════════════
+function _getMeta(){
+  if(!D.metadata) D.metadata = {};
+  if(!D.metadata[curPos]) D.metadata[curPos] = {};
+  return D.metadata[curPos];
+}
+
+function renderMetadataCard(){
+  if(!curPos || curPos==='__common__') return '';
+  const m = _getMeta();
+  const cats = Array.isArray(m.job_categories) ? m.job_categories : [];
+  const empType = m.employment_type || '';
+  const carType = m.career_type || '';
+  const carMin = (m.career_min ?? '');
+  const carMax = (m.career_max ?? '');
+  const salMin = (m.salary_min ?? '');
+  const salMax = (m.salary_max ?? '');
+  const dlType = m.deadline_type || 'always';
+  const dlDate = m.deadline_date || '';
+  const loc = m.location || '';
+  const ex = m.extras || {};
+  const opened = m._opened ? ' open' : '';
+
+  let h = '';
+  h += `<details class="meta-card"${opened} ontoggle="setMeta('_opened', this.open)" style="margin-bottom:10px;border:1px solid #e4e7ec;border-radius:8px;padding:8px 10px;background:#fafbfc">`;
+  h += `<summary style="cursor:pointer;font-size:12px;font-weight:600;color:#344054;user-select:none">⚙️ 메타 필드 (자동화 옵션)</summary>`;
+  h += `<div style="margin-top:10px;display:flex;flex-direction:column;gap:10px;font-size:12px">`;
+
+  // 1) 직군·직무 태그 (최대 3개)
+  h += `<div><label style="display:block;font-size:11px;color:#344054;margin-bottom:4px">직군·직무 (최대 3개)</label>`;
+  h += `<div id="metaCatTags" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:4px">`;
+  cats.forEach((c, i) => {
+    h += `<span style="display:inline-flex;align-items:center;gap:3px;background:#eff6ff;color:#155eef;padding:2px 6px;border-radius:10px;font-size:11px">${esc(c)}<button onclick="removeJobCategory(${i})" style="background:none;border:0;color:#155eef;cursor:pointer;padding:0;font-size:13px;line-height:1" title="삭제">×</button></span>`;
+  });
+  h += `</div>`;
+  if(cats.length < 3){
+    h += `<input type="text" placeholder="예: 백엔드 개발 (Enter)" onkeydown="if(event.key==='Enter'){event.preventDefault();addJobCategory(this.value);this.value='';}" style="width:100%;padding:4px 6px;border:1px solid #d0d5dd;border-radius:6px;font-size:12px">`;
+  } else {
+    h += `<span style="font-size:11px;color:#888">최대 3개까지 등록 가능</span>`;
+  }
+  h += `</div>`;
+
+  // 2) 고용형태
+  h += `<div><label style="display:block;font-size:11px;color:#344054;margin-bottom:4px">고용형태</label><div style="display:flex;gap:10px;flex-wrap:wrap">`;
+  [['regular','정규직'],['contract','계약직'],['intern','인턴']].forEach(([v,l])=>{
+    h += `<label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer"><input type="radio" name="meta_emp" value="${v}" ${empType===v?'checked':''} onchange="setMeta('employment_type','${v}')" style="margin:0">${l}</label>`;
+  });
+  h += `</div></div>`;
+
+  // 3) 경력 유형
+  h += `<div><label style="display:block;font-size:11px;color:#344054;margin-bottom:4px">경력 유형</label><div style="display:flex;gap:10px;flex-wrap:wrap">`;
+  [['entry','신입'],['experienced','경력']].forEach(([v,l])=>{
+    h += `<label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer"><input type="radio" name="meta_car" value="${v}" ${carType===v?'checked':''} onchange="setMeta('career_type','${v}')" style="margin:0">${l}</label>`;
+  });
+  h += `</div></div>`;
+
+  // 4) 경력 범위
+  h += `<div><label style="display:block;font-size:11px;color:#344054;margin-bottom:4px">경력 범위 (년)</label><div style="display:flex;align-items:center;gap:6px">`;
+  h += `<input type="number" min="0" max="50" value="${esc(String(carMin))}" placeholder="최소" onchange="setMeta('career_min', this.value===''?null:parseInt(this.value,10))" style="width:70px;padding:4px 6px;border:1px solid #d0d5dd;border-radius:6px;font-size:12px">`;
+  h += `<span style="color:#888">~</span>`;
+  h += `<input type="number" min="0" max="50" value="${esc(String(carMax))}" placeholder="최대" onchange="setMeta('career_max', this.value===''?null:parseInt(this.value,10))" style="width:70px;padding:4px 6px;border:1px solid #d0d5dd;border-radius:6px;font-size:12px">`;
+  h += `<span style="color:#888;font-size:11px">년</span>`;
+  h += `</div></div>`;
+
+  // 5) 연봉 범위 (선택) — v0.12.2 단위 명시 강화 (Verifier 지적: 일부 사용자가 원 단위로 오해 가능)
+  h += `<div><label style="display:block;font-size:11px;color:#344054;margin-bottom:4px">연봉 범위 — <b>만원 단위</b> (예: 5000 = 5,000만원, 선택 입력)</label><div style="display:flex;align-items:center;gap:6px">`;
+  h += `<input type="number" min="0" step="100" value="${esc(String(salMin))}" placeholder="최소" title="만원 단위" onchange="setMeta('salary_min', this.value===''?null:parseInt(this.value,10))" style="width:90px;padding:4px 6px;border:1px solid #d0d5dd;border-radius:6px;font-size:12px">`;
+  h += `<span style="color:#888;font-size:11px">만원 ~</span>`;
+  h += `<input type="number" min="0" step="100" value="${esc(String(salMax))}" placeholder="최대" title="만원 단위" onchange="setMeta('salary_max', this.value===''?null:parseInt(this.value,10))" style="width:90px;padding:4px 6px;border:1px solid #d0d5dd;border-radius:6px;font-size:12px">`;
+  h += `<span style="color:#888;font-size:11px">만원</span>`;
+  h += `</div></div>`;
+
+  // 6) 마감일
+  h += `<div><label style="display:block;font-size:11px;color:#344054;margin-bottom:4px">마감일</label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">`;
+  h += `<label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer"><input type="radio" name="meta_dl" value="always" ${dlType==='always'?'checked':''} onchange="setMeta('deadline_type','always')" style="margin:0">상시</label>`;
+  h += `<label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer"><input type="radio" name="meta_dl" value="date" ${dlType==='date'?'checked':''} onchange="setMeta('deadline_type','date')" style="margin:0">날짜:</label>`;
+  h += `<input type="date" value="${esc(dlDate)}" ${dlType!=='date'?'disabled':''} onchange="setMeta('deadline_date', this.value||null)" style="padding:3px 6px;border:1px solid #d0d5dd;border-radius:6px;font-size:12px">`;
+  h += `</div></div>`;
+
+  // 7) 근무지
+  h += `<div><label style="display:block;font-size:11px;color:#344054;margin-bottom:4px">근무지</label>`;
+  h += `<input type="text" value="${esc(loc)}" placeholder="예: 서울 강남구 / 원격 가능" oninput="setMeta('location', this.value)" style="width:100%;padding:4px 6px;border:1px solid #d0d5dd;border-radius:6px;font-size:12px">`;
+  h += `</div>`;
+
+  // 8) 기타 옵션
+  h += `<div><label style="display:block;font-size:11px;color:#344054;margin-bottom:4px">기타</label><div style="display:flex;gap:10px;flex-wrap:wrap">`;
+  ['병역특례','외국어우대','외국인지원','장애인우대'].forEach(k=>{
+    const ck = ex[k] ? 'checked' : '';
+    h += `<label style="display:inline-flex;align-items:center;gap:3px;cursor:pointer;font-size:11px"><input type="checkbox" ${ck} onchange="setMetaExtra('${k}', this.checked)" style="margin:0">${k}</label>`;
+  });
+  h += `</div></div>`;
+
+  h += `</div></details>`;
+  return h;
+}
+
+function setMeta(key, value){
+  if(!D.metadata) D.metadata = {};
+  if(!D.metadata[curPos]) D.metadata[curPos] = {};
+  D.metadata[curPos][key] = value;
+  save();
+  // 마감일 라디오 변경 시 date input enabled/disabled 즉시 반영을 위해 메타 카드만 다시 렌더
+  if(key === 'deadline_type'){
+    // 카드 일부만 새로 그리는 가벼운 방법: renderEditor() 재호출
+    // _opened 상태는 setMeta('_opened') 핸들러로 보존됨
+    if(!D.metadata[curPos]._opened) D.metadata[curPos]._opened = true;
+    renderEditor();
+  }
+}
+
+function setMetaExtra(key, checked){
+  if(!D.metadata) D.metadata = {};
+  if(!D.metadata[curPos]) D.metadata[curPos] = {};
+  if(!D.metadata[curPos].extras) D.metadata[curPos].extras = {};
+  D.metadata[curPos].extras[key] = checked;
+  save();
+}
+
+function addJobCategory(text){
+  text = (text||'').trim();
+  if(!text) return;
+  if(!D.metadata) D.metadata = {};
+  if(!D.metadata[curPos]) D.metadata[curPos] = {};
+  if(!Array.isArray(D.metadata[curPos].job_categories)) D.metadata[curPos].job_categories = [];
+  if(D.metadata[curPos].job_categories.length >= 3){ toast('직군은 최대 3개'); return; }
+  if(D.metadata[curPos].job_categories.includes(text)){ toast('이미 추가된 직군'); return; }
+  D.metadata[curPos].job_categories.push(text);
+  if(!D.metadata[curPos]._opened) D.metadata[curPos]._opened = true;
+  save();
+  renderEditor();
+}
+
+function removeJobCategory(idx){
+  if(!D.metadata || !D.metadata[curPos] || !Array.isArray(D.metadata[curPos].job_categories)) return;
+  D.metadata[curPos].job_categories.splice(idx, 1);
+  if(!D.metadata[curPos]._opened) D.metadata[curPos]._opened = true;
+  save();
+  renderEditor();
+}
+
+function setCommonLang(lang){
+  commonLang = lang;
+  render();
+}
+
+function saveJT(v){
+  if(!D.jobTitles) D.jobTitles = {};
+  D.jobTitles[curPos] = v;
+  save();
+  // 미리보기 공고명 동기화
+  const disp = $('jtDisplay');
+  if(disp) disp.textContent = v || curPos;
+  // 포지션 탭 버튼 동기화 — innerHTML로 langTag 보존
+  const tabs = $('posTabs').querySelectorAll('.tab');
+  tabs.forEach(tab=>{
+    const idx = +tab.dataset.idx;
+    if(D.positions[idx] === curPos){
+      const lang = (D.posLang||{})[curPos] || 'ko';
+      const langTag = `<span class="lang-tag lang-tag-${lang}">${lang.toUpperCase()}</span>`;
+      const st = (D.posStatus||{})[curPos] || 'draft';
+      const stTag = st !== 'draft' ? `<span class="status-tag status-${st}">${st==='active'?'Active':'Closed'}</span>` : '';
+      tab.innerHTML = esc(v || curPos) + langTag + stTag;
+    }
+  });
+}
+
+// ── Batch Copy (클릭마다 한 칸씩) ──
+let BC = { cells:[], labels:[], idx:0, rev:false };
+
+function buildBatchCells(){
+  const plt = D.platforms.find(p=>p.id===curPlt);
+  if(!plt || !curPos || curPos==='__common__') return;
+  let cells = [], labels = [];
+  cells.push(getJT()); labels.push('공고명');
+  if(plt.type==='separate' && plt.fields){
+    plt.fields.forEach(f=>{
+      const parts = f.s.map(sk=>{
+        const v = getVal(sk);
+        if(!v) return '';
+        if(f.s.length > 1) return '['+secName(sk)+']\n'+bullets(v, plt.b);
+        return bullets(v, plt.b);
+      }).filter(Boolean);
+      if(parts.length){ cells.push(parts.join(nlRepeat(LB.within))); labels.push(f.l); }
+    });
+  } else {
+    D.sections.forEach(s=>{
+      const v = getVal(s.key);
+      if(!v) return;
+      cells.push('['+s.name+']\n'+bullets(v, plt.b)); labels.push(s.name);
+    });
+  }
+  BC.cells = cells; BC.labels = labels; BC.idx = 0;
+  updateBatchBtn();
+}
+
+function updateBatchBtn(){
+  const btn = $('batchBtn');
+  if(!btn) return;
+  if(!BC.cells.length){ btn.textContent = '일괄복사'; return; }
+  if(BC.idx >= BC.cells.length){
+    btn.textContent = '✓ 완료 (클릭=처음부터)';
+    btn.classList.remove('btn-b'); btn.classList.add('btn-g');
+    return;
+  }
+  btn.classList.remove('btn-g'); btn.classList.add('btn-b');
+  btn.textContent = (BC.rev?'▲':'▼') + ' ' + BC.labels[BC.idx] + ' (' + (BC.idx+1) + '/' + BC.cells.length + ')';
+}
+
+function batchStep(){
+  if(!curPos || curPos==='__common__'){ toast('포지션을 선택하세요'); return; }
+  // 첫 클릭 또는 완료 후 재시작 시 셀 빌드
+  if(!BC.cells.length || BC.idx >= BC.cells.length){
+    if(BC.idx >= BC.cells.length && BC.cells.length > 0){ BC.idx = 0; updateBatchBtn(); return; }
+    buildBatchCells();
+    if(!BC.cells.length){ toast('복사할 내용이 없습니다'); return; }
+    return; // 첫 클릭은 준비만 (다음 클릭부터 복사)
+  }
+  clip(BC.cells[BC.idx]);
+  toast(BC.labels[BC.idx] + ' 복사됨 (' + (BC.idx+1) + '/' + BC.cells.length + ')');
+  BC.idx++;
+  updateBatchBtn();
+}
+
+function batchReverse(){
+  if(!BC.cells.length){ buildBatchCells(); }
+  BC.rev = !BC.rev;
+  BC.cells.reverse(); BC.labels.reverse();
+  BC.idx = 0;
+  updateBatchBtn();
+  toast(BC.rev ? '역순으로 변경' : '순차로 변경');
+}
+
+function batchReset(){
+  buildBatchCells();
+  toast('일괄복사 초기화');
+}
+
+// ── Position Management ──
+function addPosition(){
+  const name = prompt('새 포지션 이름:');
+  if(!name || !name.trim()) return;
+  const n = name.trim();
+  D.positions.push(n);
+  D.data[n] = {};
+  // 기본 언어: KO (편집기에서 변경 가능)
+  if(!D.posLang) D.posLang = {};
+  D.posLang[n] = 'ko';
+  // metadata 초기화 (positions.metadata JSONB)
+  if(!D.metadata) D.metadata = {};
+  D.metadata[n] = {};
+  curPos = n;
+  save(); render();
+}
+
+function duplicatePosition(){
+  if(!curPos || curPos==='__common__'){ toast('복사할 포지션을 선택하세요'); return; }
+  let newName = curPos + ' (복사)';
+  let i = 2;
+  while(D.positions.includes(newName)){ newName = curPos + ' (복사'+i+')'; i++; }
+  D.positions.push(newName);
+  // KO 데이터 복사
+  D.data[newName] = JSON.parse(JSON.stringify(D.data[curPos] || {}));
+  // EN 데이터 복사
+  if(D.data[curPos+'__en']) D.data[newName+'__en'] = JSON.parse(JSON.stringify(D.data[curPos+'__en']));
+  if(!D.jobTitles) D.jobTitles = {};
+  // 표시명은 newName(키) 그대로 노출 — 키에 이미 ' (복사)' 가 있으므로 중복 suffix 회피
+  // 사용자가 표시명을 바꾸고 싶으면 [공고명] 입력란에서 수정, 키 자체를 바꾸려면 [🔑 ID 변경] 사용
+  D.jobTitles[newName] = newName;
+  if(!D.posLang) D.posLang = {};
+  if(D.posLang[curPos]) D.posLang[newName] = D.posLang[curPos]; // 언어 태그 복사
+  if(!D.posStatus) D.posStatus = {};
+  if(D.posStatus[curPos]) D.posStatus[newName] = D.posStatus[curPos];
+  if(!D.postedPlatforms) D.postedPlatforms = {};
+  if(D.postedPlatforms[curPos]) D.postedPlatforms[newName] = JSON.parse(JSON.stringify(D.postedPlatforms[curPos]));
+  if(!D.metadata) D.metadata = {};
+  D.metadata[newName] = D.metadata[curPos] ? JSON.parse(JSON.stringify(D.metadata[curPos])) : {};
+  curPos = newName;
+  save(); render();
+}
+
+function removePosition(){
+  if(!curPos || curPos==='__common__') return;
+  if(!confirm(curPos+' 포지션을 삭제하시겠습니까?')) return;
+  const removed = curPos;
+  D.positions = D.positions.filter(p=>p!==removed);
+  delete D.data[removed];
+  delete D.data[removed+'__en']; // EN 데이터도 삭제
+  if(D.jobTitles) delete D.jobTitles[removed];
+  if(D.posLang) delete D.posLang[removed];
+  if(D.posStatus) delete D.posStatus[removed];
+  if(D.postedPlatforms) delete D.postedPlatforms[removed];
+  if(D.metadata) delete D.metadata[removed];
+  if(D.archivedOrigOrder) delete D.archivedOrigOrder[removed];
+  curPos = D.positions[0] || '';
+  save(); render();
+}
+
+// ══════════════════════════════════════
+// ── 키 변경 (Cascade Rename) ──
+// Supabase FK는 ON UPDATE CASCADE 적용됨 (2026-04-28 마이그레이션)
+// 따라서 positions.name UPDATE 한 번으로 자식 테이블 자동 갱신
+// 로컬 D 객체의 모든 키도 동시 마이그레이션
+// ══════════════════════════════════════
+async function renamePositionKey(oldName, newName){
+  if(!oldName || oldName==='__common__'){ toast('변경할 포지션을 선택하세요'); return false; }
+  newName = (newName||'').trim();
+  if(!newName){ toast('새 ID를 입력하세요'); return false; }
+  if(newName === oldName) return false;
+  if(D.positions.includes(newName) || (D.archived||[]).includes(newName)){
+    toast('이미 존재하는 ID입니다');
+    return false;
+  }
+
+  // 1) 안전 백업 (클라우드 연결 시)
+  if(_sb){
+    try { await takeCloudSnapshot('Rename 전 ' + oldName, false); } catch(e){ console.warn(e); }
+  }
+
+  // 2) Supabase positions.name UPDATE (FK ON UPDATE CASCADE → 자식 자동 갱신)
+  if(_sb){
+    try {
+      const { error } = await _sb.from('positions').update({ name: newName, updated_at: new Date().toISOString() }).eq('name', oldName);
+      if(error) throw error;
+    } catch(e){
+      console.error('Rename 실패:', e);
+      toast('Supabase rename 실패: ' + (e.message||e));
+      return false;
+    }
+  }
+
+  // 3) 로컬 D 객체 키 일괄 마이그레이션
+  const idx = D.positions.indexOf(oldName);
+  if(idx >= 0) D.positions[idx] = newName;
+  // 보관 목록에 있을 경우도 처리
+  if(D.archived){
+    const aIdx = D.archived.indexOf(oldName);
+    if(aIdx >= 0) D.archived[aIdx] = newName;
+  }
+  // data (KO + EN)
+  if(D.data[oldName] !== undefined){ D.data[newName] = D.data[oldName]; delete D.data[oldName]; }
+  if(D.data[oldName+'__en'] !== undefined){ D.data[newName+'__en'] = D.data[oldName+'__en']; delete D.data[oldName+'__en']; }
+  // jobTitles
+  if(D.jobTitles && D.jobTitles[oldName] !== undefined){
+    D.jobTitles[newName] = D.jobTitles[oldName];
+    delete D.jobTitles[oldName];
+  }
+  // posLang
+  if(D.posLang && D.posLang[oldName] !== undefined){
+    D.posLang[newName] = D.posLang[oldName];
+    delete D.posLang[oldName];
+  }
+  // posStatus
+  if(D.posStatus && D.posStatus[oldName] !== undefined){
+    D.posStatus[newName] = D.posStatus[oldName];
+    delete D.posStatus[oldName];
+  }
+  // postedPlatforms
+  if(D.postedPlatforms && D.postedPlatforms[oldName] !== undefined){
+    D.postedPlatforms[newName] = D.postedPlatforms[oldName];
+    delete D.postedPlatforms[oldName];
+  }
+  // metadata (positions.metadata JSONB)
+  if(D.metadata && D.metadata[oldName] !== undefined){
+    D.metadata[newName] = D.metadata[oldName];
+    delete D.metadata[oldName];
+  }
+  // archivedOrigOrder (보관 정렬 정보)
+  if(D.archivedOrigOrder && D.archivedOrigOrder[oldName] !== undefined){
+    D.archivedOrigOrder[newName] = D.archivedOrigOrder[oldName];
+    delete D.archivedOrigOrder[oldName];
+  }
+
+  if(curPos === oldName) curPos = newName;
+  save(); render();
+
+  // 4) 클라우드 연결 시 config.archived 갱신을 위해 push
+  if(_sb){
+    setTimeout(()=> _sbPush().then(()=> toast('ID 변경 + 동기화 완료')), 100);
+  } else {
+    toast('ID 변경 완료 (로컬)');
+  }
+  logActivity('rename', 'info', `${oldName} → ${newName}`, { cloud: !!_sb });
+  return true;
+}
+
+// ID 변경 모달 (UX 강화: dirty 감지, Enter 단축키, 자동저장 confirm)
+let _renameOriginal = null; // 모달 진입 시점의 원본 ID
+
+// 모든 닫기 경로 (헤더X, 취소, 배경클릭, ESC)에서 dirty 체크
+async function tryCloseRename(){
+  const inp = document.getElementById('renameInput');
+  if(!inp || _renameOriginal === null){ closeModal(); return; }
+  const cur = inp.value.trim();
+  if(cur === _renameOriginal || !cur){
+    // 변경 없음 또는 빈 값 → 그냥 닫기
+    _renameOriginal = null;
+    closeModal();
+    return;
+  }
+  // dirty: 사용자에게 확인
+  const ok = confirm(
+    `입력한 새 ID:\n  ${cur}\n\n저장하시겠습니까?\n\n[확인] 저장 후 닫기\n[취소] 변경 사항 버리고 닫기`
+  );
+  if(ok){
+    const success = await renamePositionKey(_renameOriginal, cur);
+    if(!success) return; // 실패 시 모달 유지하여 재시도 가능
+  }
+  _renameOriginal = null;
+  closeModal();
+}
+
+// 변경 + 닫기 (저장 버튼 / Enter 키)
+async function commitRename(){
+  const inp = document.getElementById('renameInput');
+  if(!inp) return;
+  const cur = inp.value.trim();
+  if(!cur || cur === _renameOriginal){ closeModal(); _renameOriginal = null; return; }
+  const ok = await renamePositionKey(_renameOriginal, cur);
+  if(ok){ _renameOriginal = null; closeModal(); }
+}
+
+function openRenameModal(){
+  if(!curPos || curPos==='__common__'){ toast('변경할 포지션을 선택하세요'); return; }
+  const cur = curPos;
+  _renameOriginal = cur;
+  let h = '<div class="modal-bg" onclick="if(event.target===this)tryCloseRename()">';
+  h += '<div class="modal" style="max-width:480px">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+  h += '<h2>🔑 ID 변경</h2>';
+  h += '<button class="btn btn-sm" onclick="tryCloseRename()" title="입력 사항이 있으면 저장 여부를 묻습니다">닫기</button>';
+  h += '</div>';
+  h += '<p style="font-size:12px;color:#666;line-height:1.6">';
+  h += '<strong>표시명</strong>(공고명)과 별개로, 내부 키(ID)를 변경합니다. ';
+  h += '클라우드 연결 시 Supabase의 모든 관련 데이터(섹션 내용·게시 URL)가 자동으로 따라옵니다 (FK CASCADE).';
+  h += '</p>';
+  h += '<div style="margin:16px 0">';
+  h += '<label style="font-size:12px;color:#888;display:block;margin-bottom:4px">현재 ID</label>';
+  h += `<div style="padding:8px 10px;background:#f4f4f5;border-radius:6px;font-family:monospace;font-size:13px;color:#444">${esc(cur)}</div>`;
+  h += '</div>';
+  h += '<div style="margin:16px 0">';
+  h += '<label style="font-size:12px;color:#888;display:block;margin-bottom:4px">새 ID <span style="color:#aaa;font-weight:normal">(Enter로 저장)</span></label>';
+  h += `<input id="renameInput" type="text" value="${esc(cur)}" style="width:100%;padding:8px 10px;border:1px solid #d4d4d8;border-radius:6px;font-family:monospace;font-size:13px" autofocus onkeydown="if(event.key==='Enter'){event.preventDefault();commitRename();}else if(event.key==='Escape'){event.preventDefault();tryCloseRename();}">`;
+  h += '</div>';
+  h += '<div style="display:flex;gap:8px;justify-content:flex-end;margin-top:20px">';
+  h += '<button class="btn btn-sm" onclick="tryCloseRename()">취소</button>';
+  h += `<button class="btn btn-sm btn-b" onclick="commitRename()">💾 저장 후 닫기</button>`;
+  h += '</div>';
+  h += '</div></div>';
+  // 다른 모달과 통일: modalRoot에 주입 (closeModal이 modalRoot를 비우므로 닫기 버튼 정상 작동)
+  $('modalRoot').innerHTML = h;
+  // 입력 필드 전체 선택 (사용자가 바로 새 이름 타이핑 가능)
+  setTimeout(()=>{ const inp = document.getElementById('renameInput'); if(inp){ inp.focus(); inp.select(); } }, 50);
+}
+
+// ══════════════════════════════════════
+// ── Section Management Modal ──
+// ══════════════════════════════════════
+function openSectionMgr(){
+  let h = '<div class="modal-bg" onclick="if(event.target===this)closeModal()">';
+  h += '<div class="modal">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+  h += '<h2>⚙️ 섹션 관리</h2>';
+  h += '<button class="btn btn-sm" onclick="closeModal()">닫기</button>';
+  h += '</div>';
+  h += '<p style="font-size:12px;color:#888;margin-bottom:12px">섹션의 추가/삭제/이름변경/순서변경/공통여부를 설정합니다.</p>';
+
+  h += '<div id="secList">';
+  h += renderSecList();
+  h += '</div>';
+
+  h += '<div style="margin-top:12px;display:flex;gap:6px">';
+  h += '<button class="btn btn-sm btn-b" onclick="addSection()">+ 섹션 추가</button>';
+  h += '<button class="btn btn-sm btn-g" onclick="resetSections()">기본값 복원</button>';
+  h += '</div>';
+
+  h += '</div></div>';
+  $('modalRoot').innerHTML = h;
+  initSecDrag();
+}
+
+function renderSecList(){
+  let h = '';
+  D.sections.forEach((sec, i)=>{
+    h += `<div class="sec-row" draggable="true" data-idx="${i}">`;
+    h += `<span class="drag-handle" title="드래그하여 순서 변경">⠿</span>`;
+    h += `<span class="sec-name">${esc(sec.name)}</span>`;
+    h += `<span class="sec-key">(${sec.key})</span>`;
+    // 공통 여부
+    h += `<select onchange="toggleCommon(${i},this.value)">`;
+    h += `<option value="false" ${!sec.commonOnly?'selected':''}>포지션별</option>`;
+    h += `<option value="true" ${sec.commonOnly?'selected':''}>공통만</option>`;
+    h += '</select>';
+    // 이름 변경
+    h += `<button class="btn btn-sm" onclick="renameSection(${i})">이름변경</button>`;
+    // 삭제
+    h += `<button class="btn btn-sm btn-r" onclick="deleteSection(${i})">삭제</button>`;
+    h += '</div>';
+  });
+  return h;
+}
+
+function addSection(){
+  const name = prompt('새 섹션 이름:');
+  if(!name || !name.trim()) return;
+  const key = genKey(name.trim());
+  D.sections.push({key, name:name.trim(), commonOnly:false});
+  save();
+  $('secList').innerHTML = renderSecList(); initSecDrag();
+  render();
+}
+
+function deleteSection(i){
+  const sec = D.sections[i];
+  if(!confirm(`"${sec.name}" 섹션을 삭제하시겠습니까?\n(해당 섹션의 모든 데이터도 삭제됩니다)`)) return;
+  D.sections.splice(i, 1);
+  // 데이터에서도 제거 (KO/EN 모두)
+  Object.keys(D.data).forEach(dk=>{
+    if(D.data[dk] && D.data[dk][sec.key]) delete D.data[dk][sec.key];
+  });
+  // 플랫폼 fields에서도 제거
+  D.platforms.forEach(plt=>{
+    if(plt.fields){
+      plt.fields.forEach(f=>{ f.s = f.s.filter(sk=>sk!==sec.key); });
+      plt.fields = plt.fields.filter(f=>f.s.length > 0);
+    }
+  });
+  save();
+  $('secList').innerHTML = renderSecList(); initSecDrag();
+  render();
+}
+
+function renameSection(i){
+  const sec = D.sections[i];
+  const name = prompt('새 이름:', sec.name);
+  if(!name || !name.trim() || name.trim()===sec.name) return;
+  sec.name = name.trim();
+  save();
+  $('secList').innerHTML = renderSecList(); initSecDrag();
+  render();
+}
+
+function moveSection(i, dir){
+  const j = i + dir;
+  if(j < 0 || j >= D.sections.length) return;
+  [D.sections[i], D.sections[j]] = [D.sections[j], D.sections[i]];
+  save();
+  $('secList').innerHTML = renderSecList(); initSecDrag();
+  render();
+}
+
+function toggleCommon(i, val){
+  D.sections[i].commonOnly = val === 'true';
+  save();
+  render();
+}
+
+// ── 섹션 드래그 앤 드롭 ──
+function initSecDrag(){
+  const wrap = $('secList');
+  if(!wrap) return;
+  let dragIdx = -1;
+  const rows = wrap.querySelectorAll('.sec-row[draggable]');
+  rows.forEach(row=>{
+    row.addEventListener('dragstart', e=>{
+      if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)){ e.preventDefault(); return; }
+      dragIdx = +row.dataset.idx;
+      row.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    row.addEventListener('dragend', ()=>{
+      row.classList.remove('dragging');
+      wrap.querySelectorAll('.sec-row').forEach(r=>r.classList.remove('drag-over'));
+    });
+    row.addEventListener('dragover', e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      wrap.querySelectorAll('.sec-row').forEach(r=>r.classList.remove('drag-over'));
+      if(+row.dataset.idx !== dragIdx) row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', ()=> row.classList.remove('drag-over'));
+    row.addEventListener('drop', e=>{
+      e.preventDefault();
+      const targetIdx = +row.dataset.idx;
+      if(targetIdx === dragIdx || dragIdx < 0) return;
+      const item = D.sections.splice(dragIdx, 1)[0];
+      D.sections.splice(targetIdx, 0, item);
+      save();
+      $('secList').innerHTML = renderSecList(); initSecDrag();
+      render();
+    });
+  });
+}
+
+function resetSections(){
+  if(!confirm('섹션을 기본값으로 복원하시겠습니까?')) return;
+  D.sections = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+  save();
+  $('secList').innerHTML = renderSecList(); initSecDrag();
+  render();
+}
+
+// ══════════════════════════════════════
+// ── Platform Field Mapping Modal ──
+// ══════════════════════════════════════
+function openPlatformMgr(){
+  let h = '<div class="modal-bg" onclick="if(event.target===this)closeModal()">';
+  h += '<div class="modal">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+  h += '<h2>📋 플랫폼 설정</h2>';
+  h += '<button class="btn btn-sm" onclick="closeModal()">닫기</button>';
+  h += '</div>';
+  h += '<p style="font-size:12px;color:#888;margin-bottom:14px">플랫폼 추가/삭제/순서변경, 불릿·타입 변경, 필드 매핑을 설정합니다.</p>';
+
+  h += '<div id="pltConfig">';
+  h += renderPlatformConfig();
+  h += '</div>';
+
+  h += '<div style="margin-top:12px;display:flex;gap:6px">';
+  h += '<button class="btn btn-sm btn-b" onclick="addPlatform()">+ 플랫폼 추가</button>';
+  h += '<button class="btn btn-sm btn-g" onclick="resetPlatforms()">기본값 복원</button>';
+  h += '</div>';
+
+  h += '</div></div>';
+  $('modalRoot').innerHTML = h;
+  initPltDrag();
+}
+
+function _pi(id){ return D.platforms.findIndex(p=>p.id===id); }
+
+function renderPlatformConfig(){
+  const typeLabels = {separate:'개별필드', single:'통합텍스트', html:'HTML에디터', fullhtml:'리치텍스트'};
+  let h = '';
+  D.platforms.forEach((plt)=>{
+    const pid = plt.id;
+    h += `<div class="plt-card" draggable="true" data-pid="${esc(pid)}" style="margin-bottom:16px;border:1px solid #eee;border-radius:8px;padding:10px 12px;background:#fafafa">`;
+    h += `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;flex-wrap:wrap">`;
+    h += `<span class="drag-handle" title="드래그하여 순서 변경">⠿</span>`;
+    h += `<input style="font-size:14px;font-weight:700;border:1px solid #ddd;border-radius:4px;padding:2px 8px;width:120px" value="${esc(plt.name)}" onchange="renamePlatform(_pi('${pid}'),this.value)">`;
+    h += `<select style="font-size:11px;padding:2px 4px;border:1px solid #ddd;border-radius:4px" onchange="changePltType(_pi('${pid}'),this.value)">`;
+    Object.keys(typeLabels).forEach(t=>{
+      h += `<option value="${t}" ${plt.type===t?'selected':''}>${typeLabels[t]}</option>`;
+    });
+    h += '</select>';
+    h += `<label style="font-size:11px;color:#666">불릿:</label>`;
+    h += `<input style="width:40px;font-size:12px;text-align:center;border:1px solid #ddd;border-radius:4px;padding:2px" value="${esc(plt.b||'')}" onchange="changePltBullet(_pi('${pid}'),this.value)">`;
+    h += `<label style="font-size:11px;color:#666;display:flex;align-items:center;gap:3px;cursor:pointer" title="미리보기/게시현황에 노출"><input type="checkbox" ${plt.hidden?'':'checked'} onchange="togglePltVisible(_pi('${pid}'),this.checked)" style="margin:0;cursor:pointer">노출</label>`;
+    h += `<span style="flex:1"></span>`;
+    h += `<button class="btn btn-sm btn-r" onclick="removePlatform(_pi('${pid}'))">삭제</button>`;
+    h += '</div>';
+    h += `<input style="width:100%;font-size:11px;color:#888;border:1px solid #eee;border-radius:4px;padding:4px 8px;margin-bottom:6px" value="${esc(plt.desc||'')}" placeholder="설명 (선택)" onchange="changePltDesc(_pi('${pid}'),this.value)">`;
+
+    if(plt.type === 'separate' && plt.fields){
+      h += `<div class="pf-field-list" data-pid="${esc(pid)}">`;
+      plt.fields.forEach((f, fi)=>{
+        h += `<div class="pf-row" draggable="true" data-fi="${fi}">`;
+        h += `<span class="drag-handle" style="font-size:13px" title="드래그하여 순서 변경">⠿</span>`;
+        h += `<input class="pf-label" style="border:1px solid #ddd;border-radius:4px;padding:2px 6px;font-size:12px;width:120px" value="${esc(f.l)}" onchange="renamePltField(_pi('${pid}'),${fi},this.value)">`;
+        h += `<div class="pf-sections">`;
+        D.sections.forEach(sec=>{
+          const active = f.s.includes(sec.key);
+          h += `<span class="pf-tag ${active?'active':''}" onclick="togglePltSec(_pi('${pid}'),${fi},'${sec.key}')">${esc(sec.name)}</span>`;
+        });
+        h += '</div>';
+        h += `<button class="btn btn-sm btn-r" onclick="removePltField(_pi('${pid}'),${fi})">삭제</button>`;
+        h += '</div>';
+      });
+      h += '</div>';
+      h += `<button class="btn btn-sm" style="margin-top:4px" onclick="addPltField(_pi('${pid}'))">+ 필드 추가</button>`;
+    } else {
+      h += `<p style="font-size:11px;color:#999">이 타입은 모든 섹션을 순서대로 표시합니다 (섹션 관리에서 순서 변경 가능)</p>`;
+    }
+    h += '</div>';
+  });
+  return h;
+}
+
+// ── 플랫폼 카드 드래그 앤 드롭 ──
+function initPltDrag(){
+  const wrap = $('pltConfig');
+  if(!wrap) return;
+  let dragId = null;
+  const cards = wrap.querySelectorAll('.plt-card[draggable]');
+  cards.forEach(card=>{
+    card.addEventListener('dragstart', e=>{
+      if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)){ e.preventDefault(); return; }
+      dragId = card.dataset.pid;
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragId);
+    });
+    card.addEventListener('dragend', ()=>{
+      dragId = null;
+      card.classList.remove('dragging');
+      wrap.querySelectorAll('.plt-card').forEach(c=>c.classList.remove('drag-over'));
+    });
+    card.addEventListener('dragover', e=>{
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      wrap.querySelectorAll('.plt-card').forEach(c=>c.classList.remove('drag-over'));
+      if(card.dataset.pid !== dragId) card.classList.add('drag-over');
+    });
+    card.addEventListener('dragleave', ()=> card.classList.remove('drag-over'));
+    card.addEventListener('drop', e=>{
+      e.preventDefault();
+      const targetId = card.dataset.pid;
+      if(!dragId || targetId === dragId) return;
+      const fromIdx = D.platforms.findIndex(p=>p.id===dragId);
+      const toIdx = D.platforms.findIndex(p=>p.id===targetId);
+      if(fromIdx < 0 || toIdx < 0) return;
+      const item = D.platforms.splice(fromIdx, 1)[0];
+      D.platforms.splice(toIdx, 0, item);
+      dragId = null;
+      save();
+      $('pltConfig').innerHTML = renderPlatformConfig();
+      initPltDrag();
+      render();
+    });
+  });
+  // 필드 행 드래그
+  wrap.querySelectorAll('.pf-field-list').forEach(list=>{
+    const pltId = list.dataset.pid;
+    let dragFi = -1;
+    const rows = list.querySelectorAll('.pf-row[draggable]');
+    rows.forEach(row=>{
+      row.addEventListener('dragstart', e=>{
+        if(['INPUT','SELECT','TEXTAREA'].includes(e.target.tagName)){ e.preventDefault(); return; }
+        e.stopPropagation();
+        dragFi = +row.dataset.fi;
+        row.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', 'field');
+      });
+      row.addEventListener('dragend', ()=>{
+        row.classList.remove('dragging');
+        list.querySelectorAll('.pf-row').forEach(r=>r.classList.remove('drag-over'));
+      });
+      row.addEventListener('dragover', e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        e.dataTransfer.dropEffect = 'move';
+        list.querySelectorAll('.pf-row').forEach(r=>r.classList.remove('drag-over'));
+        if(+row.dataset.fi !== dragFi) row.classList.add('drag-over');
+      });
+      row.addEventListener('dragleave', ()=> row.classList.remove('drag-over'));
+      row.addEventListener('drop', e=>{
+        e.preventDefault();
+        e.stopPropagation();
+        const targetFi = +row.dataset.fi;
+        if(targetFi === dragFi || dragFi < 0) return;
+        const pi = D.platforms.findIndex(p=>p.id===pltId);
+        if(pi < 0) return;
+        const fields = D.platforms[pi].fields;
+        const item = fields.splice(dragFi, 1)[0];
+        fields.splice(targetFi, 0, item);
+        dragFi = -1;
+        save();
+        $('pltConfig').innerHTML = renderPlatformConfig();
+        initPltDrag();
+        renderPreview();
+      });
+    });
+  });
+}
+
+function togglePltSec(pi, fi, secKey){
+  const f = D.platforms[pi].fields[fi];
+  const idx = f.s.indexOf(secKey);
+  if(idx >= 0) f.s.splice(idx, 1);
+  else f.s.push(secKey);
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+  renderPreview();
+}
+
+function renamePltField(pi, fi, val){
+  D.platforms[pi].fields[fi].l = val;
+  save();
+}
+
+function addPltField(pi){
+  const name = prompt('새 필드 이름:');
+  if(!name || !name.trim()) return;
+  D.platforms[pi].fields.push({l:name.trim(), s:[]});
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+}
+
+function removePltField(pi, fi){
+  D.platforms[pi].fields.splice(fi, 1);
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+  renderPreview();
+}
+
+function movePltField(pi, fi, dir){
+  const fields = D.platforms[pi].fields;
+  const j = fi + dir;
+  if(j < 0 || j >= fields.length) return;
+  [fields[fi], fields[j]] = [fields[j], fields[fi]];
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+  renderPreview();
+}
+
+function addPlatform(){
+  const name = prompt('새 플랫폼 이름:');
+  if(!name || !name.trim()) return;
+  // ID 생성: 영소문자+숫자+_ 만 허용, 한글 등 제거 후 빈 경우 'plt' 기반
+  const base = name.trim().toLowerCase().replace(/[^a-z0-9]/g,'_').replace(/^_+|_+$/g,'') || 'plt';
+  let id = base; let n = 2;
+  while(D.platforms.find(p=>p.id===id)){ id = base + '_' + (n++); }
+  D.platforms.push({id, name:name.trim(), type:'single', b:'· ', desc:'', fields:[]});
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+  render();
+}
+
+function removePlatform(pi){
+  if(!confirm(`"${D.platforms[pi].name}" 플랫폼을 삭제하시겠습니까?`)) return;
+  const removed = D.platforms.splice(pi, 1)[0];
+  if(curPlt === removed.id) curPlt = D.platforms[0]?.id || '';
+  // postedPlatforms에서 삭제된 플랫폼 ID 정리
+  if(D.postedPlatforms){
+    Object.keys(D.postedPlatforms).forEach(pos => {
+      if(D.postedPlatforms[pos]) delete D.postedPlatforms[pos][removed.id];
+    });
+  }
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+  render();
+}
+
+function movePlatform(pi, dir){
+  const j = pi + dir;
+  if(j < 0 || j >= D.platforms.length) return;
+  [D.platforms[pi], D.platforms[j]] = [D.platforms[j], D.platforms[pi]];
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+  render();
+}
+
+function renamePlatform(pi, val){
+  D.platforms[pi].name = val;
+  save();
+  render();
+}
+
+function changePltType(pi, val){
+  D.platforms[pi].type = val;
+  // separate 타입으로 변경 시 fields가 없으면 기본 생성
+  if(val === 'separate' && (!D.platforms[pi].fields || !D.platforms[pi].fields.length)){
+    D.platforms[pi].fields = D.sections.map(s=>({l:s.name, s:[s.key]}));
+  }
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+  render();
+}
+
+function changePltBullet(pi, val){
+  D.platforms[pi].b = val;
+  save();
+  renderPreview();
+}
+
+function changePltDesc(pi, val){
+  D.platforms[pi].desc = val;
+  save();
+}
+
+function togglePltVisible(pi, checked){
+  D.platforms[pi].hidden = !checked;
+  save();
+  render();
+}
+
+// ── Archive (보관처리) ──
+function archivePosition(){
+  if(!curPos || curPos==='__common__'){ toast('보관할 포지션을 선택하세요'); return; }
+  if(!confirm((D.jobTitles[curPos]||curPos)+' 포지션을 보관처리 하시겠습니까?')) return;
+  // 보관 직전 스냅샷 (Supabase 연결 시)
+  if(_sb) takeCloudSnapshot('보관 전 ' + (D.jobTitles[curPos]||curPos) + ' (' + new Date().toLocaleString('ko',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) + ')', false);
+  if(!D.archived) D.archived = [];
+  // 원래 순서 기억 (복원 시 재삽입 위치에 사용)
+  if(!D.archivedOrigOrder) D.archivedOrigOrder = {};
+  D.archivedOrigOrder[curPos] = D.positions.indexOf(curPos);
+  D.archived.push(curPos);
+  D.positions = D.positions.filter(p=>p!==curPos);
+  curPos = D.positions[0] || '__common__';
+  save(); render();
+  toast('보관처리 완료');
+}
+
+function restorePosition(posName){
+  if(!D.archived) return;
+  D.archived = D.archived.filter(p=>p!==posName);
+  if(!D.positions.includes(posName)){
+    // 원래 순서로 재삽입 (보관 당시 index, 현재 길이에 clamp)
+    const origIdx = (D.archivedOrigOrder||{})[posName];
+    if(typeof origIdx === 'number'){
+      D.positions.splice(Math.min(origIdx, D.positions.length), 0, posName);
+      delete D.archivedOrigOrder[posName];
+    } else {
+      D.positions.push(posName);
+    }
+  }
+  save(); render();
+  toast(posName+' 복원 완료');
+  openArchive(); // 모달 새로고침
+}
+
+function deleteArchivedPosition(posName){
+  if(!confirm(posName+' 포지션을 영구 삭제하시겠습니까?\n(데이터가 완전히 삭제됩니다)')) return;
+  // 영구 삭제 직전 스냅샷
+  if(_sb) takeCloudSnapshot('삭제 전 ' + posName + ' (' + new Date().toLocaleString('ko',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}) + ')', false);
+  if(D.archived) D.archived = D.archived.filter(p=>p!==posName);
+  delete D.data[posName];
+  delete D.data[posName+'__en'];
+  if(D.jobTitles) delete D.jobTitles[posName];
+  if(D.posLang) delete D.posLang[posName];
+  if(D.posStatus) delete D.posStatus[posName];
+  if(D.postedPlatforms) delete D.postedPlatforms[posName];
+  save();
+  toast(posName+' 영구 삭제 완료');
+  openArchive();
+}
+
+function openArchive(){
+  if(!D.archived) D.archived = [];
+  let h = '<div class="modal-bg" onclick="if(event.target===this)closeModal()">';
+  h += '<div class="modal" style="max-width:520px">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+  h += '<h2>📦 보관함</h2>';
+  h += '<button class="btn btn-sm" onclick="closeModal()">닫기</button>';
+  h += '</div>';
+  if(!D.archived.length){
+    h += '<p style="color:#999;font-size:13px;text-align:center;padding:20px">보관된 포지션이 없습니다.</p>';
+  } else {
+    D.archived.forEach(p=>{
+      const jt = (D.jobTitles||{})[p] || p;
+      const st = (D.posStatus||{})[p] || 'draft';
+      h += `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid #eee;border-radius:6px;margin-bottom:4px;background:#fafafa">`;
+      h += `<span style="flex:1;font-size:13px;font-weight:600">${esc(jt)}</span>`;
+      h += `<span class="status-tag status-${st}" style="font-size:9px">${st}</span>`;
+      h += `<button class="btn btn-sm btn-b" onclick="restorePosition('${escJs(p)}')">복원</button>`;
+      h += `<button class="btn btn-sm btn-r" onclick="deleteArchivedPosition('${escJs(p)}')">삭제</button>`;
+      h += `</div>`;
+    });
+  }
+  h += '</div></div>';
+  $('modalRoot').innerHTML = h;
+}
+
+function resetPlatforms(){
+  if(!confirm('플랫폼 설정을 기본값으로 복원하시겠습니까?')) return;
+  D.platforms = JSON.parse(JSON.stringify(DEFAULT_PLATFORMS));
+  save();
+  $('pltConfig').innerHTML = renderPlatformConfig(); initPltDrag();
+  render();
+}
+
+function closeModal(){
+  $('modalRoot').innerHTML = '';
+}
+
+// ── Keyboard shortcuts ──
+document.addEventListener('keydown', function(e){
+  // Ctrl+Z = Undo, Ctrl+Y or Ctrl+Shift+Z = Redo
+  // textarea/input 내부에서는 브라우저 기본 undo 유지 (텍스트 편집 undo)
+  const tag = (e.target.tagName||'').toLowerCase();
+  if(tag === 'textarea' || tag === 'input') return;
+  if(e.ctrlKey && !e.altKey){
+    if(e.key === 'z' && !e.shiftKey){ e.preventDefault(); undo(); }
+    else if(e.key === 'y' || (e.key === 'z' && e.shiftKey)){ e.preventDefault(); redo(); }
+  }
+});
+
+// ── Init ──
+render();
+// LB 값 초기 표시
+$('lbBetween').textContent = LB.between;
+$('lbWithin').textContent = LB.within;
+// IndexedDB 비동기 초기화
+_initFromIndexedDB();
+
+// ── 창 닫기 시 저장 ──
+window.addEventListener('beforeunload', function(e){
+  if(!_dirty) return;
+  // 파일 핸들이 있으면 자동 저장
+  if(_fileHandle){
+    _writeToHandle();
+    _dirty = false;
+    return;
+  }
+  // 클라우드 연결 시: 대기 중인 push를 즉시 실행하고 경고 없이 닫기
+  if(_sb){
+    clearTimeout(_sbPushTimer);
+    _sbPush(); // 비동기지만 최선의 시도
+    _dirty = false;
+    return;
+  }
+  // 로컬 모드(파일 핸들 없음)에서만 브라우저 경고
+  e.preventDefault();
+  e.returnValue = '';
+});
+
+// ══════════════════════════════════════
+// ── Supabase Cloud Sync (정규화 테이블) ──
+// ══════════════════════════════════════
+//
+// 테이블 구조:
+//   config           — 섹션·플랫폼 설정 (1행)
+//   positions        — 포지션 목록 + 메타데이터
+//   common_content   — 공통(KO/EN) 섹션별 내용
+//   position_content — 포지션(KO/EN) 섹션별 내용
+//
+const SB_LS_KEY = LS_KEY + '_sb';
+let _sb = null;
+let _sbConf = JSON.parse(localStorage.getItem(SB_LS_KEY) || 'null');
+
+// ── F10: 활동 로그 (recruit_activity_log) ──
+// 모든 동기화/오류 이벤트를 Supabase에 누적, 사후 디버깅 + 패턴 분석
+const CLIENT_ID = (function(){
+  const k = 'jobpost_client_id';
+  let v = localStorage.getItem(k);
+  if(!v){ v = 'c_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2,7); localStorage.setItem(k, v); }
+  return v;
+})();
+const ACTIVITY_LOG_MAX = 500; // 보관 최대 개수 (초과 시 오래된 것 삭제)
+let _activityBuffer = []; // 오프라인 시 임시 보관
+
+async function logActivity(eventType, level, message, context){
+  const entry = {
+    event_type: eventType,
+    level: level || 'info',
+    message: message || '',
+    context: context || {},
+    client_id: CLIENT_ID
+  };
+  // 콘솔에도 미러링 (디버깅 즉시성)
+  const tag = `[ACT:${eventType}/${level||'info'}]`;
+  if(level === 'error') console.error(tag, message, context);
+  else if(level === 'warn') console.warn(tag, message, context);
+  else console.log(tag, message, context);
+  // Supabase 미연결 시 버퍼링
+  if(!_sb){
+    _activityBuffer.push(entry);
+    if(_activityBuffer.length > 100) _activityBuffer.shift();
+    return;
+  }
+  try {
+    // 버퍼 flush + 현재 entry
+    const rows = _activityBuffer.length ? [..._activityBuffer, entry] : [entry];
+    _activityBuffer = [];
+    await _sb.from('recruit_activity_log').insert(rows);
+    // 보관 정책: 최대 ACTIVITY_LOG_MAX 개 (가벼운 정리, push 마다 가끔)
+    if(Math.random() < 0.05){ // 5% 확률로 정리 (성능 부담 분산)
+      const { data: ids } = await _sb.from('recruit_activity_log').select('id').order('ts', {ascending: false}).range(ACTIVITY_LOG_MAX, ACTIVITY_LOG_MAX + 100);
+      if(ids && ids.length){
+        const oldIds = ids.map(r => r.id);
+        await _sb.from('recruit_activity_log').delete().in('id', oldIds);
+      }
+    }
+  } catch(e){
+    // 로그 자체 실패는 silent (무한 루프 방지)
+    console.warn('logActivity 저장 실패:', e.message);
+  }
+}
+
+async function listActivityLog(limit){
+  if(!_sb) return [];
+  const { data, error } = await _sb.from('recruit_activity_log')
+    .select('*').order('ts', {ascending: false}).limit(limit || 20);
+  if(error){ console.warn('listActivityLog 실패:', error); return []; }
+  return data || [];
+}
+let _sbStatus = 'off';
+
+function _sbDot(status){
+  _sbStatus = status;
+  const dot = $('syncDot');
+  if(dot) dot.className = 'sync-dot ' + status;
+  // 저장/불러오기 버튼 항상 표시
+}
+
+// _sbInit: 페이지 로드 시 vs 사용자 재연결 시 분기
+// - autoSync='pull' (기본, 페이지 로드): cloud 데이터 가져옴
+// - autoSync='push': dirty 변경분 있으면 push 우선 (재연결용)
+// - autoSync='auto' (권장): dirty 자동 감지, push→pull or pull
+function _sbInit(autoSync){
+  if(!_sbConf || !_sbConf.url || !_sbConf.key){ _sb = null; _sbDot('off'); return; }
+  try {
+    _sb = supabase.createClient(_sbConf.url, _sbConf.key);
+    _sbDot('ok');
+    if(autoSync === 'push'){
+      _sbPush();
+    } else if(autoSync === 'auto'){
+      // dirty 우선: 로컬 변경분 있으면 push 후 pull, 없으면 pull
+      if(_dirty){
+        toast('로컬 변경 감지 — 푸시 후 동기화');
+        _sbPush().then(()=> _sbPull());
+      } else {
+        _sbPull();
+      }
+    } else {
+      // 기본: pull (페이지 로드 시 정상 동작)
+      _sbPull();
+    }
+  } catch(e){
+    console.warn('Supabase 초기화 실패:', e);
+    toast('연결 실패: ' + (e.message||e));
+    _sb = null; _sbDot('err');
+  }
+}
+
+// ── Push: 로컬 D → Supabase (upsert + 선택적 삭제, delete-all 제거) ──
+async function _sbPush(){
+  if(!_sb) return;
+  _sbDot('syncing');
+  const now = new Date().toISOString();
+  try {
+    // 1) config — 섹션 + 플랫폼 + LB + 보관 목록
+    {
+      const row = { id: 'default', sections: D.sections, platforms: D.platforms, line_breaks: LB, archived: D.archived || [], updated_at: now };
+      const { error } = await _sb.from('config').upsert(row, { onConflict: 'id' });
+      if(error) throw error;
+    }
+
+    // 2) positions — 활성 + 보관 모두 upsert (is_archived 구분), FK 보존
+    {
+      if(!D.posStatus) D.posStatus = {};
+      if(!D.metadata) D.metadata = {};
+      // metadata 정리: _opened 같은 내부 UI state 제거 후 push
+      const cleanMeta = (p) => {
+        const src = (D.metadata||{})[p] || {};
+        const out = {};
+        Object.keys(src).forEach(k => { if(k !== '_opened') out[k] = src[k]; });
+        return out;
+      };
+      const activeRows = D.positions.map((p, i) => ({
+        name: p, job_title: (D.jobTitles||{})[p] || p,
+        lang: (D.posLang||{})[p] || 'ko', status: (D.posStatus||{})[p] || 'draft',
+        sort_order: i, is_archived: false, metadata: cleanMeta(p), updated_at: now
+      }));
+      const archivedRows = (D.archived||[]).map((p, i) => ({
+        name: p, job_title: (D.jobTitles||{})[p] || p,
+        lang: (D.posLang||{})[p] || 'ko', status: 'archived',
+        sort_order: 9000 + i, is_archived: true, metadata: cleanMeta(p), updated_at: now
+      }));
+      const allRows = [...activeRows, ...archivedRows];
+      if(allRows.length){
+        let { error } = await _sb.from('positions').upsert(allRows, { onConflict: 'name' });
+        // metadata 컬럼이 아직 없는 Supabase 스키마 — graceful fallback
+        // PostgREST 에러 메시지에 'metadata' + 'column' 패턴 또는 PGRST204(스키마 캐시 누락) 감지
+        if(error && /metadata/i.test(error.message||'') && (/column/i.test(error.message||'') || error.code === 'PGRST204')){
+          if(!window._jpMetaWarned){
+            console.info('[jobpost] positions.metadata 컬럼이 아직 없어 메타필드를 제외하고 동기화합니다. schema.sql(v0.8.0+) 재실행 또는 v0.11.0-metadata 마이그레이션 적용 권장.');
+            toast('⚠ 메타필드는 동기화 제외됨 — schema.sql 최신 버전을 한 번 실행하세요');
+            window._jpMetaWarned = true;
+          }
+          const stripped = allRows.map(({ metadata, ...rest }) => rest);
+          const retry = await _sb.from('positions').upsert(stripped, { onConflict: 'name' });
+          if(retry.error) throw retry.error;
+        } else if(error) {
+          throw error;
+        }
+      }
+      // 활성/보관 어디에도 없는 포지션만 삭제 (전체 delete 금지)
+      const keepNames = allRows.map(r => r.name);
+      const { data: existPos } = await _sb.from('positions').select('name');
+      const stale = (existPos||[]).map(r => r.name).filter(n => !keepNames.includes(n));
+      if(stale.length) await _sb.from('positions').delete().in('name', stale);
+    }
+
+    // 3) posting_urls
+    // ⚠ 이 테이블은 jd-extension(브리지)도 같이 쓴다.
+    //   확장이 등록한 실제 페이지 URL은 🎯 자동 매칭의 근거이므로 절대 덮어쓰거나 지우면 안 됨.
+    //   jobpost가 만드는 row는 url='Y' 마커뿐 — insert/삭제 모두 'Y' 마커에만 적용한다.
+    try {
+      if(!D.postedPlatforms) D.postedPlatforms = {};
+      const checkedPairs = [];
+      Object.keys(D.postedPlatforms).forEach(posName => {
+        Object.keys(D.postedPlatforms[posName]||{}).forEach(pltId => {
+          if(D.postedPlatforms[posName][pltId]) checkedPairs.push({ position_name: posName, platform_id: pltId });
+        });
+      });
+      const checkedKeys = new Set(checkedPairs.map(p => p.position_name + '||' + p.platform_id));
+      const { data: existUrls } = await _sb.from('posting_urls').select('position_name,platform_id,url');
+      const existKeys = new Set((existUrls||[]).map(r => r.position_name + '||' + r.platform_id));
+      // 새로 체크된 페어만 insert — 이미 있는 row는 확장이 등록한 실제 URL일 수 있으므로 건드리지 않음
+      const newRows = checkedPairs
+        .filter(p => !existKeys.has(p.position_name + '||' + p.platform_id))
+        .map(p => ({ position_name: p.position_name, platform_id: p.platform_id, url: 'Y', updated_at: now }));
+      if(newRows.length){
+        const { error } = await _sb.from('posting_urls').upsert(newRows, { onConflict: 'position_name,platform_id' });
+        if(error) throw error;
+      }
+      // 체크 해제된 페어 삭제 — 단, jobpost가 만든 url='Y' 마커만.
+      // posting_urls 테이블엔 단일 PK 'id' 가 없고 복합키만 있으므로 페어별 개별 delete (Promise.all 병렬)
+      const stalePairs = (existUrls||[])
+        .filter(r => r.url === 'Y' && !checkedKeys.has(r.position_name + '||' + r.platform_id));
+      if(stalePairs.length){
+        await Promise.all(stalePairs.map(r =>
+          _sb.from('posting_urls').delete().eq('position_name', r.position_name).eq('platform_id', r.platform_id).eq('url', 'Y')
+        ));
+      }
+    } catch(pe){ console.warn('posting_urls push 건너뜀:', pe); }
+
+    // 4) common_content — upsert + 삭제된 섹션 stale 정리
+    {
+      const rows = [];
+      ['ko','en'].forEach(lang => {
+        const dk = lang === 'en' ? '공통_en' : '공통';
+        const obj = D.data[dk] || {};
+        Object.keys(obj).forEach(secKey => {
+          if(obj[secKey]) rows.push({ lang, section_key: secKey, content: obj[secKey], updated_at: now });
+        });
+      });
+      if(rows.length){
+        const { error } = await _sb.from('common_content').upsert(rows, { onConflict: 'lang,section_key' });
+        if(error) throw error;
+      }
+      // 삭제된 섹션 stale row 제거
+      try {
+        const keepCC = new Set(rows.map(r => r.lang + '||' + r.section_key));
+        const { data: existCC } = await _sb.from('common_content').select('lang,section_key');
+        const staleCC = (existCC||[]).filter(r => !keepCC.has(r.lang + '||' + r.section_key));
+        if(staleCC.length){
+          await Promise.all(staleCC.map(sc =>
+            _sb.from('common_content').delete().eq('lang', sc.lang).eq('section_key', sc.section_key)
+          ));
+        }
+      } catch(ce){ console.warn('common_content stale 정리 건너뜀:', ce); }
+    }
+
+    // 5) position_content — 활성 + 보관 포지션 모두 포함 (내용 보존)
+    {
+      const allPos = [...D.positions, ...(D.archived||[])];
+      const rows = [];
+      allPos.forEach(p => {
+        ['ko','en'].forEach(lang => {
+          const dk = lang === 'en' ? p + '__en' : p;
+          const obj = D.data[dk] || {};
+          Object.keys(obj).forEach(secKey => {
+            if(obj[secKey]) rows.push({ position_name: p, lang, section_key: secKey, content: obj[secKey], updated_at: now });
+          });
+        });
+      });
+      // upsert 100건씩 배치
+      for(let i = 0; i < rows.length; i += 100){
+        const { error } = await _sb.from('position_content').upsert(rows.slice(i, i+100), { onConflict: 'position_name,lang,section_key' });
+        if(error) throw error;
+      }
+      // stale 정리 — (position_name, lang, section_key) 페어 단위 (common_content와 동일 방식)
+      // ① 포지션 자체가 사라진 경우 + ② 포지션은 남았지만 섹션 내용이 비워지거나 섹션이 삭제된 경우 모두 처리
+      // (②가 없으면 비운 텍스트가 다음 pull 때 클라우드에서 부활함)
+      if(allPos.length){
+        try {
+          const keepPC = new Set(rows.map(r => r.position_name + '||' + r.lang + '||' + r.section_key));
+          const { data: existPc } = await _sb.from('position_content').select('position_name,lang,section_key');
+          const stalePosSet = new Set();
+          const stalePairs = [];
+          (existPc||[]).forEach(r => {
+            if(!allPos.includes(r.position_name)){ stalePosSet.add(r.position_name); return; }
+            if(!keepPC.has(r.position_name + '||' + r.lang + '||' + r.section_key)) stalePairs.push(r);
+          });
+          if(stalePosSet.size) await _sb.from('position_content').delete().in('position_name', [...stalePosSet]);
+          if(stalePairs.length){
+            await Promise.all(stalePairs.map(r =>
+              _sb.from('position_content').delete().eq('position_name', r.position_name).eq('lang', r.lang).eq('section_key', r.section_key)
+            ));
+          }
+        } catch(pce){ console.warn('position_content stale 정리 건너뜀:', pce); }
+      }
+    }
+
+    _sbDot('ok');
+    _dirty = false;
+    const autoLabel = 'Auto ' + new Date().toLocaleString('ko', {month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+    takeCloudSnapshot(autoLabel, true);
+    logActivity('push', 'info', '동기화 완료', { positions: D.positions.length, archived: (D.archived||[]).length });
+  } catch(e){
+    console.warn('Supabase push 실패:', e);
+    toast('Push 실패: ' + (e.message||e));
+    _sbDot('err');
+    logActivity('push', 'error', e.message||String(e), { stack: (e.stack||'').slice(0,500) });
+  }
+}
+
+// ── Pull: 4개 테이블 → 로컬 D 재구성 ──
+async function _sbPull(){
+  if(!_sb) return;
+  _sbDot('syncing');
+  // Safety net: pull로 D가 통째 덮어씌워지므로, 진입 직전 로컬 스냅샷을 별도 키에 보관
+  // (pull 중 사용자 변경 손실 시 복구 가능)
+  try {
+    const beforeSnap = { ts: Date.now(), dirty: _dirty, D: D };
+    localStorage.setItem('jobpost_safety_before_pull', JSON.stringify(beforeSnap));
+  } catch(e){ /* 용량 초과 등 무시 */ }
+  try {
+    // 1) config
+    const { data: cfgRows, error: e1 } = await _sb.from('config').select('*').eq('id','default').limit(1);
+    if(e1) throw e1;
+
+    // 서버에 데이터가 없으면 현재 데이터 push
+    if(!cfgRows || !cfgRows.length){
+      _sbDot('ok');
+      _sbPush();
+      return;
+    }
+
+    // 2) positions
+    const { data: posRows, error: e2 } = await _sb.from('positions').select('*').order('sort_order');
+    if(e2) throw e2;
+
+    // 3) common_content
+    const { data: ccRows, error: e3 } = await _sb.from('common_content').select('*');
+    if(e3) throw e3;
+
+    // 4) position_content
+    const { data: pcRows, error: e4 } = await _sb.from('position_content').select('*');
+    if(e4) throw e4;
+
+    // 5) posting_urls
+    const { data: urlRows, error: e5 } = await _sb.from('posting_urls').select('*');
+    // posting_urls 테이블이 없을 수 있음 (구버전) — 무시
+    if(e5 && !e5.message.includes('does not exist')) throw e5;
+
+    // ── 로컬 D 재구성 ──
+    _skipSnapshot = true;
+
+    // config + LB + 보관 목록
+    const cfg = cfgRows[0];
+    if(cfg.sections) D.sections = cfg.sections;
+    if(cfg.platforms) D.platforms = cfg.platforms;
+    if(cfg.line_breaks){
+      LB = cfg.line_breaks;
+      localStorage.setItem(LS_KEY_LB, JSON.stringify(LB));
+      $('lbBetween').textContent = LB.between;
+      $('lbWithin').textContent = LB.within;
+    }
+    // 보관 목록: Supabase 값 우선, 없으면 로컬 유지
+    D.archived = Array.isArray(cfg.archived) ? cfg.archived : (D.archived || []);
+
+    // positions — is_archived로 활성/보관 분리
+    D.positions = (posRows||[]).filter(r => !r.is_archived).map(r => r.name);
+    // D.archived: config.archived 우선, 없으면 positions 테이블의 is_archived=true 목록
+    const archivedFromPos = (posRows||[]).filter(r => r.is_archived).map(r => r.name);
+    D.archived = Array.isArray(cfg.archived) && cfg.archived.length
+      ? cfg.archived
+      : archivedFromPos;
+    D.jobTitles = {};
+    D.posLang = {};
+    D.posStatus = {};
+    D.metadata = {};
+    (posRows||[]).forEach(r => {
+      D.jobTitles[r.name] = r.job_title || r.name;
+      D.posLang[r.name] = r.lang || 'ko';
+      D.posStatus[r.name] = r.is_archived ? 'archived' : (r.status || 'draft');
+      // metadata: 컬럼이 없으면 r.metadata === undefined, 있으면 객체. 항상 객체 보장.
+      D.metadata[r.name] = (r.metadata && typeof r.metadata === 'object') ? r.metadata : {};
+    });
+
+    // common_content
+    D.data['공통'] = {};
+    D.data['공통_en'] = {};
+    (ccRows||[]).forEach(r => {
+      const dk = r.lang === 'en' ? '공통_en' : '공통';
+      D.data[dk][r.section_key] = r.content;
+    });
+
+    // position_content — 활성 + 보관 포지션 모두 복원
+    const allRestoredPos = [...D.positions, ...(D.archived||[])];
+    allRestoredPos.forEach(p => {
+      D.data[p] = {};
+      D.data[p + '__en'] = {};
+    });
+    (pcRows||[]).forEach(r => {
+      const dk = r.lang === 'en' ? r.position_name + '__en' : r.position_name;
+      if(!D.data[dk]) D.data[dk] = {};
+      D.data[dk][r.section_key] = r.content;
+    });
+
+    // posting_urls → postedPlatforms (boolean)
+    D.postedPlatforms = {};
+    (urlRows||[]).forEach(r => {
+      if(!D.postedPlatforms[r.position_name]) D.postedPlatforms[r.position_name] = {};
+      D.postedPlatforms[r.position_name][r.platform_id] = true;
+    });
+
+    // 로컬 저장
+    const json = JSON.stringify(D);
+    try{ localStorage.setItem(LS_KEY, json); }catch(e){}
+    if(typeof localforage !== 'undefined') localforage.setItem(LS_KEY, json).catch(()=>{});
+
+    _skipSnapshot = false;
+    if(curPos !== '__common__' && !D.positions.includes(curPos)) curPos = D.positions[0] || '';
+    render();
+    toast('클라우드에서 동기화 완료');
+    _sbDot('ok');
+    logActivity('pull', 'info', '클라우드 → 로컬 복원 완료', { positions: D.positions.length, archived: (D.archived||[]).length });
+    // pull 후 dirty 변경분 손실 가능성 검사 → 사용자에게 복구 옵션 제시
+    checkSafetyDiff();
+  } catch(e){
+    console.warn('Supabase pull 실패:', e);
+    toast('Pull 실패: ' + (e.message||e));
+    _sbDot('err');
+    logActivity('pull', 'error', e.message||String(e), { stack: (e.stack||'').slice(0,500) });
+  }
+}
+
+// ── 안전 백업 비교: pull 직전 로컬과 pull 후 D 비교, 차이 있으면 사용자 알림 ──
+function checkSafetyDiff(){
+  try {
+    const raw = localStorage.getItem('jobpost_safety_before_pull');
+    if(!raw) return;
+    const snap = JSON.parse(raw);
+    if(!snap || !snap.D) return;
+    // dirty 였던 경우만 알림 (정상 pull과 구분)
+    if(!snap.dirty) return;
+    // 단순 비교: D.data 의 텍스트 길이 합산이 줄었는지
+    const oldLen = JSON.stringify(snap.D.data || {}).length;
+    const newLen = JSON.stringify(D.data || {}).length;
+    if(oldLen > newLen + 100){ // 100자 이상 손실 시 (오차 범위 무시)
+      const lossKB = Math.round((oldLen - newLen)/1024 * 10)/10;
+      const ok = confirm(
+        `⚠️ 데이터 손실 감지\n\n` +
+        `클라우드 동기화 직전 로컬에 변경 사항이 있었으나, 클라우드 데이터로 덮어씌워졌습니다.\n` +
+        `손실 추정: 약 ${lossKB}KB\n\n` +
+        `[확인]을 누르면 직전 로컬 데이터로 복구합니다.\n` +
+        `[취소]를 누르면 현재 클라우드 데이터를 유지합니다 (복구 키는 7일간 보존됨).`
+      );
+      if(ok){
+        D = snap.D;
+        save();
+        render();
+        toast('직전 로컬 데이터로 복구 완료');
+        // 복구 후엔 즉시 push (클라우드도 갱신)
+        if(_sb) setTimeout(_sbPush, 500);
+      }
+    }
+  } catch(e){ console.warn('safety diff 검사 실패:', e); }
+}
+
+// ── 클라우드 스냅샷 (recruit_snapshots 테이블, 구조화면접 등 타 프로젝트와 충돌 없음) ──
+const SNAP_MAX = 48;         // 최대 보관 개수
+const SNAP_AUTO_INTERVAL = 60 * 60 * 1000; // 자동 스냅샷 간격: 1시간
+let _lastCloudSnapTime = 0;
+
+// label: 표시 이름, auto: true면 중복 방지 시간 체크 적용
+async function takeCloudSnapshot(label, auto){
+  if(!_sb) return;
+  if(auto && (Date.now() - _lastCloudSnapTime) < SNAP_AUTO_INTERVAL) return;
+  try {
+    const { error } = await _sb.from('recruit_snapshots').insert({ label, data: D });
+    if(error) throw error;
+    _lastCloudSnapTime = Date.now();
+    // 오래된 스냅샷 정리 (SNAP_MAX 초과분 삭제)
+    const { data: rows } = await _sb.from('recruit_snapshots')
+      .select('id').order('created_at', { ascending: false }).range(SNAP_MAX, 9999);
+    if(rows && rows.length){
+      const ids = rows.map(r => r.id);
+      await _sb.from('recruit_snapshots').delete().in('id', ids);
+    }
+    if(!auto) toast('스냅샷 저장됨');
+  } catch(e){ console.warn('스냅샷 실패:', e); }
+}
+
+async function listCloudSnapshots(){
+  if(!_sb) return [];
+  try {
+    const { data, error } = await _sb.from('recruit_snapshots')
+      .select('id, label, created_at').order('created_at', { ascending: false }).limit(SNAP_MAX);
+    if(error) throw error;
+    return data || [];
+  } catch(e){ return []; }
+}
+
+async function restoreCloudSnapshot(id){
+  if(!_sb) return;
+  if(!confirm('이 스냅샷으로 복원하면 현재 데이터가 덮어씌워집니다. 계속하시겠습니까?')) return;
+  try {
+    const { data, error } = await _sb.from('recruit_snapshots').select('data, label, created_at').eq('id', id).single();
+    if(error) throw error;
+    // 복원 전 현재 상태 스냅샷 저장
+    await takeCloudSnapshot('복원 직전 자동 백업 (' + new Date().toLocaleString('ko') + ')', false);
+    _skipSnapshot = true;
+    D = data.data;
+    const json = JSON.stringify(D);
+    localStorage.setItem(LS_KEY, json);
+    if(typeof localforage !== 'undefined') localforage.setItem(LS_KEY, json).catch(()=>{});
+    _skipSnapshot = false;
+    if(curPos !== '__common__' && !D.positions.includes(curPos)) curPos = D.positions[0] || '';
+    render();
+    closeModal();
+    toast('스냅샷 복원 완료: ' + data.label);
+    setTimeout(_sbPush, 1000); // 복원된 데이터를 cloud에도 반영
+  } catch(e){ toast('복원 실패: ' + (e.message||e)); }
+}
+
+// save() 후 자동 push (3초 디바운스)
+let _sbPushTimer = null;
+const _origSave = save;
+save = function(){
+  _origSave();
+  if(_sb){
+    clearTimeout(_sbPushTimer);
+    _sbPushTimer = setTimeout(_sbPush, 3000);
+  }
+};
+
+function syncNow(){
+  if(!_sb){ toast('Supabase가 연결되지 않았습니다'); return; }
+  clearTimeout(_sbPushTimer);
+  toast('동기화 중...');
+  // push 먼저 (로컬 변경사항 보존) → pull (클라우드 최신 반영)
+  _sbPush().then(() => _sbPull());
+}
+
+// ── Supabase 설정 모달 ──
+const _SB_SQL = `-- 1) 앱 설정 (섹션·플랫폼·줄바꿈)
+create table config (
+  id text primary key default 'default',
+  sections jsonb,
+  platforms jsonb,
+  line_breaks jsonb,
+  archived jsonb default '[]',
+  updated_at timestamptz default now()
+);
+-- 기존 테이블에 archived 컬럼이 없을 경우 실행:
+-- alter table config add column if not exists archived jsonb default '[]';
+
+-- 2) 포지션 목록 + 상태 (is_archived: 보관 포지션도 보존하여 content FK 유지)
+create table positions (
+  name text primary key,
+  job_title text,
+  lang text default 'ko',
+  status text default 'draft',
+  sort_order int default 0,
+  is_archived boolean default false,
+  updated_at timestamptz default now()
+);
+-- 기존 테이블 업그레이드: alter table positions add column if not exists is_archived boolean default false;
+
+-- 3) 공통 데이터 (KO/EN × 섹션)
+create table common_content (
+  lang text not null,
+  section_key text not null,
+  content text,
+  updated_at timestamptz default now(),
+  primary key (lang, section_key)
+);
+
+-- 4) 포지션별 데이터 (포지션 × KO/EN × 섹션)
+create table position_content (
+  position_name text not null references positions(name) on delete cascade,
+  lang text not null,
+  section_key text not null,
+  content text,
+  updated_at timestamptz default now(),
+  primary key (position_name, lang, section_key)
+);
+
+-- 5) 포지션별 플랫폼 게시 URL
+create table posting_urls (
+  position_name text not null references positions(name) on delete cascade,
+  platform_id text not null,
+  url text,
+  updated_at timestamptz default now(),
+  primary key (position_name, platform_id)
+);
+
+-- 6) 스냅샷 (채용공고관리 전용, 다른 프로젝트와 충돌 방지용 recruit_ prefix)
+create table recruit_snapshots (
+  id bigint generated always as identity primary key,
+  label text not null,
+  data jsonb not null,
+  created_at timestamptz default now()
+);
+
+-- RLS 정책 (인증 없이 접근 허용)
+alter table config enable row level security;
+alter table positions enable row level security;
+alter table common_content enable row level security;
+alter table position_content enable row level security;
+alter table posting_urls enable row level security;
+alter table recruit_snapshots enable row level security;
+
+create policy "Allow all" on config for all using (true) with check (true);
+create policy "Allow all" on positions for all using (true) with check (true);
+create policy "Allow all" on common_content for all using (true) with check (true);
+create policy "Allow all" on position_content for all using (true) with check (true);
+create policy "Allow all" on posting_urls for all using (true) with check (true);
+create policy "Allow all" on recruit_snapshots for all using (true) with check (true);`;
+
+function openSupabaseMgr(){
+  const conf = _sbConf || {};
+  let h = '<div class="modal-bg" onclick="if(event.target===this)closeModal()">';
+  h += '<div class="modal" style="max-width:580px">';
+  h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">';
+  h += '<h2>☁️ 클라우드 동기화 (Supabase)</h2>';
+  h += '<button class="btn btn-sm" onclick="closeModal()">닫기</button>';
+  h += '</div>';
+
+  h += '<p style="font-size:12px;color:#888;margin-bottom:14px;line-height:1.6">';
+  h += '5개 정규화 테이블에 데이터를 분리 저장합니다.<br>';
+  h += '<strong>config</strong>(설정+LB) · <strong>positions</strong>(포지션+상태) · <strong>common_content</strong>(공통KO/EN) · <strong>position_content</strong>(포지션별KO/EN) · <strong>posting_urls</strong>(게시URL)</p>';
+
+  h += '<details style="margin-bottom:14px;border:1px solid #eee;border-radius:8px;padding:10px 12px;background:#f9f9f9">';
+  h += '<summary style="font-size:12px;font-weight:700;cursor:pointer;color:#4DD2A7">📘 Supabase 프로젝트 생성 가이드</summary>';
+  h += '<div style="font-size:11px;color:#666;line-height:1.8;margin-top:8px">';
+  h += '1. <a href="https://supabase.com" target="_blank" style="color:#4DD2A7">supabase.com</a> 가입 → <strong>New Project</strong><br>';
+  h += '2. <strong>SQL Editor</strong>에서 아래 SQL 전체 복사·실행<br>';
+  h += '3. <strong>Settings → API</strong>에서 URL + anon key 복사<br>';
+  h += '4. 아래에 붙여넣기 → 연결</div>';
+  h += `<div style="margin-top:8px;position:relative"><button class="btn btn-sm" onclick="navigator.clipboard.writeText(_SB_SQL);toast('SQL 복사됨')" style="position:absolute;top:4px;right:4px;z-index:1">복사</button>`;
+  h += `<pre style="background:#222;color:#0f0;padding:8px;border-radius:6px;font-size:10px;overflow-x:auto;max-height:200px;overflow-y:auto;margin:0;white-space:pre">${esc(_SB_SQL)}</pre></div>`;
+  h += '</details>';
+
+  h += '<div class="field"><label>Project URL</label>';
+  h += `<input id="sbUrl" value="${esc(conf.url||'')}" placeholder="https://xxxxx.supabase.co"></div>`;
+  h += '<div class="field"><label>Anon Key</label>';
+  h += `<input id="sbKey" type="password" value="${esc(conf.key||'')}" placeholder="eyJhbGciOiJIUzI1NiIs..."></div>`;
+
+  h += '<div style="display:flex;gap:6px;align-items:center;margin-top:14px">';
+  h += `<span class="sync-dot ${_sbStatus}" style="width:10px;height:10px"></span>`;
+  h += `<span style="font-size:12px;color:#666">${_sbStatus==='ok'?'연결됨':_sbStatus==='err'?'연결 실패':_sbStatus==='syncing'?'동기화 중...':'미연결'}</span>`;
+  h += '<button class="btn btn-sm" onclick="sbDisconnect()">연결 해제</button>';
+  h += '<button class="btn btn-sm btn-b" onclick="sbConnect()">연결</button>';
+  h += '<button class="btn btn-sm btn-g" onclick="syncNow();closeModal()">지금 동기화</button>';
+  h += '</div>';
+
+  // 스냅샷 섹션 (연결 상태일 때만)
+  if(_sbStatus === 'ok' || _sbStatus === 'syncing'){
+    h += '<div style="margin-top:18px;border-top:1px solid #eee;padding-top:14px">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">';
+    h += '<span style="font-size:12px;font-weight:700">📸 스냅샷 백업</span>';
+    h += `<button class="btn btn-sm btn-b" onclick="takeCloudSnapshot('수동 백업 '+new Date().toLocaleString('ko',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),false).then(()=>openSupabaseMgr())">지금 백업</button>`;
+    h += '</div>';
+    h += '<div id="snapList" style="font-size:11px;color:#999;text-align:center;padding:8px">불러오는 중...</div>';
+    h += '</div>';
+
+    // F10: 활동 로그 섹션 (연결 상태일 때만)
+    h += '<div style="margin-top:14px;border-top:1px solid #eee;padding-top:14px">';
+    h += '<div style="display:flex;align-items:center;gap:6px;margin-bottom:8px">';
+    h += '<span style="font-size:12px;font-weight:700">📝 활동 로그</span>';
+    h += '<span style="font-size:10px;color:#aaa">최근 20건</span>';
+    h += '<span style="flex:1"></span>';
+    h += '<button class="btn btn-sm" onclick="(async()=>{const r=await listActivityLog(20);const el=$(\'actList\');if(!el)return;if(!r.length){el.textContent=\'로그 없음\';return;}let s=\'\';r.forEach(a=>{const dt=new Date(a.ts).toLocaleString(\'ko\',{month:\'2-digit\',day:\'2-digit\',hour:\'2-digit\',minute:\'2-digit\',second:\'2-digit\'});const c=a.level===\'error\'?\'#dc2626\':a.level===\'warn\'?\'#d97706\':\'#666\';s+=`<div style=\"display:flex;gap:6px;padding:3px 0;border-bottom:1px solid #f0f0f0;font-size:10px\"><span style=\"color:#aaa;white-space:nowrap;font-family:monospace\">${dt}</span><span style=\"color:${c};font-weight:600;min-width:50px\">${a.event_type}</span><span style=\"color:#444;flex:1\">${esc(a.message||\'\')}</span></div>`});el.innerHTML=s;})()" style="font-size:10px;padding:2px 8px">새로고침</button>';
+    h += '</div>';
+    h += '<div id="actList" style="font-size:10px;color:#999;text-align:center;padding:8px;max-height:200px;overflow-y:auto">[새로고침] 클릭하여 조회</div>';
+    h += '</div>';
+  }
+
+  h += '</div></div>';
+  $('modalRoot').innerHTML = h;
+
+  // 스냅샷 목록 비동기 로드
+  if(_sbStatus === 'ok' || _sbStatus === 'syncing'){
+    listCloudSnapshots().then(snaps => {
+      const el = $('snapList');
+      if(!el) return;
+      if(!snaps.length){ el.textContent = '저장된 스냅샷이 없습니다'; return; }
+      let s = '<div style="display:flex;flex-direction:column;gap:4px;max-height:180px;overflow-y:auto">';
+      snaps.forEach(sn => {
+        const dt = new Date(sn.created_at).toLocaleString('ko',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'});
+        s += `<div style="display:flex;align-items:center;gap:6px;padding:4px 0;border-bottom:1px solid #f0f0f0">`;
+        s += `<span style="flex:1;color:#444;font-size:11px">${esc(sn.label)}</span>`;
+        s += `<span style="color:#aaa;white-space:nowrap">${dt}</span>`;
+        s += `<button class="btn btn-sm" style="padding:2px 6px;font-size:10px" onclick="restoreCloudSnapshot(${sn.id})">복원</button>`;
+        s += '</div>';
+      });
+      s += '</div>';
+      el.innerHTML = s;
+    });
+  }
+}
+
+function sbConnect(){
+  const url = $('sbUrl').value.trim().replace(/\/+$/, '');
+  const key = $('sbKey').value.trim();
+  if(!url || !key){ toast('URL과 Key를 모두 입력하세요'); return; }
+  _sbConf = { url, key };
+  localStorage.setItem(SB_LS_KEY, JSON.stringify(_sbConf));
+  _sbInit('auto');
+  closeModal();
+  setTimeout(()=> logActivity('connect', 'info', '사용자가 연결', { dirty: _dirty }), 100);
+}
+
+function sbDisconnect(){
+  logActivity('disconnect', 'info', '사용자가 연결 해제');
+  _sbConf = null; _sb = null;
+  localStorage.removeItem(SB_LS_KEY);
+  _sbDot('off');
+  toast('클라우드 연결 해제됨');
+  closeModal();
+}
+
+if(_sbConf) _sbInit();
+
+window.addEventListener('online', ()=>{
+  if(_sb && _dirty){
+    toast('네트워크 복귀 — 자동 푸시 시도');
+    setTimeout(_sbPush, 500);
+  }
+});
+
+// build: 2026-04-28 activity-log + ui
+</script>
+</body>
+</html>
